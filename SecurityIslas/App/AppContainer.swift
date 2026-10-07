@@ -20,6 +20,8 @@ final class AppContainer {
     let location: LocationService
     let notifications: NotificationManager
     let biometrics: BiometricAuthenticator
+    /// Vínculo con el Apple Watch (solo la sesión inicial).
+    let watch: PhoneWatchBridge
 
     let auth: AuthRepository
     let registration: RegistrationRepository
@@ -105,6 +107,8 @@ final class AppContainer {
         // Servicios
         location = LocationService(usesSimulation: useMockBackend)
         notifications = NotificationManager()
+        let watch = PhoneWatchBridge()
+        self.watch = watch
         session = SessionStore(
             auth: auth,
             tokenStore: tokenStore,
@@ -114,7 +118,18 @@ final class AppContainer {
             events: events
         )
 
-        session.onSignOut = { residentQR.clear() }
+        session.onSignOut = {
+            residentQR.clear()
+            // El reloj usa su propia sesión, pero al cerrar la del iPhone
+            // también se desvincula para no dejarlo abierto sin querer.
+            watch.sendIfPossible(.unlinked)
+        }
+        let mockServer = self.mockServer
+        watch.onLinked = { [weak self] linked in
+            await mockServer?.importLinkedWatch(linked)
+            self?.dataDidChange()
+        }
+        watch.activate()
         notifications.decisionHandler = { [weak self] visitId, decision in
             do {
                 _ = try await visits.decide(visitId, decision: decision)

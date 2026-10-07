@@ -47,7 +47,7 @@ nonisolated struct DefaultHeadersInterceptor: RequestInterceptor {
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         request.setValue("es-MX", forHTTPHeaderField: "Accept-Language")
         request.setValue(deviceId, forHTTPHeaderField: "X-Device-Id")
-        request.setValue("ios/\(appVersion)", forHTTPHeaderField: "X-Client")
+        request.setValue("\(AppInfo.platform)/\(appVersion)", forHTTPHeaderField: "X-Client")
         return request
     }
 }

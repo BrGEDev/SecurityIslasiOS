@@ -21,6 +21,7 @@ nonisolated enum BiometricError: Error, LocalizedError, Sendable, Equatable {
             self = .failed
             return
         }
+        #if os(iOS)
         switch code {
         case .userCancel, .appCancel, .systemCancel, .userFallback:
             self = .canceled
@@ -31,6 +32,14 @@ nonisolated enum BiometricError: Error, LocalizedError, Sendable, Equatable {
         default:
             self = .failed
         }
+        #else
+        switch code {
+        case .userCancel, .appCancel, .systemCancel:
+            self = .canceled
+        default:
+            self = .failed
+        }
+        #endif
     }
 
     var errorDescription: String? {
@@ -52,6 +61,7 @@ final class BiometricAuthenticator {
         self.reuseWindow = reuseWindow
     }
 
+    #if os(iOS)
     var biometryType: LABiometryType {
         let context = LAContext()
         _ = context.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: nil)
@@ -69,10 +79,18 @@ final class BiometricAuthenticator {
     var biometryIcon: String {
         biometryType == .touchID ? "touchid" : "faceid"
     }
+    #endif
 
     /// Regresa un contexto autenticado. Si hubo una autenticación hace menos de
     /// `reuseWindow` segundos, la reutiliza.
+    ///
+    /// En el Apple Watch no hay Face ID (RF-68): basta con que el reloj esté
+    /// puesto y desbloqueado. Eso lo garantiza la llave, que solo se puede usar
+    /// con el reloj desbloqueado (`DeviceKeyManager`), así que aquí no se pide nada.
     func authenticate(reason: String) async throws -> LAContext {
+        #if os(watchOS)
+        return LAContext()
+        #else
         if let cachedContext, let authenticatedAt,
            Date.now.timeIntervalSince(authenticatedAt) < reuseWindow {
             return cachedContext
@@ -100,6 +118,7 @@ final class BiometricAuthenticator {
         cachedContext = context
         authenticatedAt = .now
         return context
+        #endif
     }
 
     func invalidate() {
@@ -108,6 +127,7 @@ final class BiometricAuthenticator {
         authenticatedAt = nil
     }
 
+    #if os(iOS)
     private func evaluate(_ context: LAContext, reason: String) async throws {
         try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
             context.evaluatePolicy(.deviceOwnerAuthentication, localizedReason: reason) { @Sendable success, error in
@@ -119,4 +139,5 @@ final class BiometricAuthenticator {
             }
         }
     }
+    #endif
 }

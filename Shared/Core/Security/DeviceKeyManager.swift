@@ -19,9 +19,15 @@ nonisolated enum DeviceKeyError: Error, LocalizedError, Sendable {
     case missingKey
     case accessControl
 
+    #if os(watchOS)
+    private static let missingKeyMessage = "Este reloj todavía no tiene su llave. Vuélvelo a vincular desde tu iPhone."
+    #else
+    private static let missingKeyMessage = "Este iPhone todavía no tiene su llave. Vuelve a activar Face ID."
+    #endif
+
     var errorDescription: String? {
         switch self {
-        case .missingKey: "Este iPhone todavía no tiene su llave. Vuelve a activar Face ID."
+        case .missingKey: Self.missingKeyMessage
         case .accessControl: "No se pudo proteger la llave del dispositivo."
         }
     }
@@ -47,6 +53,18 @@ nonisolated final class DeviceKeyManager: Sendable {
         #endif
     }
 
+    /// iPhone: biometría o código en cada firma (RF-67).
+    /// Apple Watch: no tiene Face ID; la llave solo se puede usar con el reloj
+    /// desbloqueado (`WhenPasscodeSet`), y el reloj se bloquea al quitárselo de
+    /// la muñeca. Eso cumple "puesto y desbloqueado" (RF-68).
+    private static var accessFlags: SecAccessControlCreateFlags {
+        #if os(watchOS)
+        [.privateKeyUsage]
+        #else
+        [.privateKeyUsage, .userPresence]
+        #endif
+    }
+
     var hasKey: Bool {
         keychain.data(for: keyTag) != nil
     }
@@ -64,7 +82,7 @@ nonisolated final class DeviceKeyManager: Sendable {
             guard let access = SecAccessControlCreateWithFlags(
                 nil,
                 kSecAttrAccessibleWhenPasscodeSetThisDeviceOnly,
-                [.privateKeyUsage, .userPresence],
+                Self.accessFlags,
                 &error
             ) else {
                 throw DeviceKeyError.accessControl

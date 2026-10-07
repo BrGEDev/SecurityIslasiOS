@@ -10,10 +10,14 @@ firma o mocks, y anota ahí cada supuesto nuevo.
 
 - **Prioridad de fuentes:** reglas de negocio > requerimientos (RF/RNF) > maquetas > stack.
   Si algo no está definido (ver "Decisiones abiertas"), pregunta en lugar de decidir.
-- **Backend no existe todavía.** Todo va contra `MockServer` (`Core/Mock`) a través de la misma capa
-  de red que usará el backend real. No inventes endpoints definitivos: agrega el endpoint en
-  `Core/API/API.swift`, su protocolo en `Core/Repositories`, la ruta en `MockServer` y marca los
-  campos supuestos en `DECISIONES.md`.
+- **Backend no existe todavía.** Todo va contra `MockServer` (`Shared/Core/Mock`) a través de la misma
+  capa de red que usará el backend real. No inventes endpoints definitivos: agrega el endpoint en
+  `Shared/Core/API/API.swift`, su protocolo en `Shared/Core/Repositories`, la ruta en `MockServer` y
+  marca los campos supuestos en `DECISIONES.md`.
+- **Dos targets, una carpeta compartida.** `SecurityIslas/` es solo iPhone, `SecurityIslasWatch Watch
+  App/` es solo reloj y `Shared/` se compila en los dos (red, sesión, firma, modelos, mocks,
+  ViewModels de pluma y pánico, chips de visita). Todo lo que pongas en `Shared/` debe compilar en
+  watchOS: nada de UIKit/CoreImage/Face ID sin `#if os(iOS)`.
 - **Flujo de datos único:** Vista → ViewModel (`@Observable`) → repositorio (protocolo) → `APIClient`
   → interceptores (`DefaultHeaders`, `AuthInterceptor`) → transporte (`MockTransport` / `URLSession`).
   Nunca crear clientes de red en una vista; todo sale de `AppContainer`.
@@ -60,8 +64,9 @@ Hecho con mocks y la capa de red/sesión real: secciones **A** (registro complet
 3a/3b, aprobación, permisos, Face ID, Inicio y estados del botón), **B** (visitas, invitación única y
 de evento, recurrentes, detalle, paquetería), **C** (Mi QR TOTP, historial, paquetes), **D** (pánico
 en la app: mantener, cuenta regresiva, alerta dentro/fuera) y **F** (cuenta, familia, dispositivos,
-contactos, huéspedes, permiso de obra, propietario no residente). Notificaciones locales simuladas con
-categorías `VISITA_PENDIENTE` / `VISITA_INFO` desde **Cuenta › Simulación**.
+contactos, huéspedes, permiso de obra, propietario no residente) y **G** en el reloj (vínculo, visitas,
+pluma, Mi QR, pánico). Notificaciones locales simuladas con categorías `VISITA_PENDIENTE` /
+`VISITA_INFO` desde **Cuenta › Simulación** (en el iPhone) y el menú Simulación del reloj.
 
 ## Pendiente por integrar del brief
 
@@ -84,11 +89,14 @@ Marca cada punto al terminarlo y mueve los supuestos a `DECISIONES.md`.
       (RF-41). Pantalla bloqueada: distancia a la entrada y visitas pendientes (pantalla 31).
 - [ ] **Controles del Centro de control** (`ControlWidget`, iOS 18, fase 4): Abrir pluma, Pánico y
       Mi QR; también en las esquinas de la pantalla bloqueada.
-- [ ] **App watchOS independiente** (sección G, pantallas 39–43): aviso de visita con Autorizar /
-      Rechazar (RF-03), app con abrir pluma (basta reloj puesto y desbloqueado, RF-68), Mi QR,
-      complicaciones y Smart Stack (target de widgets de watchOS). Registra su propia llave;
-      WatchConnectivity solo para la sesión inicial. La caída (pantalla 42) es **fase 5 y
-      propuesta**: requiere permiso de Apple, no presentarla como confirmada.
+- [x] **App watchOS independiente** (sección G, pantallas 39–41): vínculo desde el iPhone con llave
+      propia, visitas con Autorizar / Rechazar (también desde el aviso, RF-03), abrir pluma /
+      solicitar paso (RF-23, RF-68), Mi QR sin internet y pánico. Ver "Apple Watch" en
+      `DECISIONES.md`.
+- [ ] **Widgets de watchOS** (pantalla 43): complicaciones y Smart Stack para abrir pluma, pánico y
+      Mi QR (target Widget Extension de watchOS). Escena de notificación con foto (pantalla 39).
+      La caída (pantalla 42) es **fase 5 y propuesta**: requiere permiso de Apple, no presentarla
+      como confirmada.
 
 ### En el target actual
 

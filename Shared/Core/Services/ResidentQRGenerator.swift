@@ -7,11 +7,13 @@
 //  Algoritmo, periodo y formato del payload son supuestos (DECISIONES.md).
 //
 
-import CoreImage
-import CoreImage.CIFilterBuiltins
 import CryptoKit
 import Foundation
+#if os(iOS)
+import CoreImage
+import CoreImage.CIFilterBuiltins
 import UIKit
+#endif
 
 nonisolated enum TOTP {
     static func code(secret: Data, date: Date = .now, period: Int = 30, digits: Int = 8) -> String {
@@ -36,6 +38,9 @@ nonisolated enum TOTP {
     }
 }
 
+#if os(iOS)
+/// En el iPhone el QR se dibuja con CoreImage. watchOS no tiene CoreImage:
+/// el reloj usa su propio codificador (`QRCodeMatrix`).
 enum QRCodeRenderer {
     static func image(for payload: String, scale: CGFloat = 12) -> UIImage? {
         let filter = CIFilter.qrCodeGenerator()
@@ -49,6 +54,7 @@ enum QRCodeRenderer {
         return UIImage(cgImage: cgImage)
     }
 }
+#endif
 
 /// Obtiene (y cachea) la semilla del QR y arma el payload vigente.
 final class ResidentQRGenerator {

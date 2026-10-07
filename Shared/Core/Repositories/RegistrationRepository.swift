@@ -45,6 +45,9 @@ protocol DeviceRepository {
     func remove(_ device: Device, signed: Bool) async throws
     /// Crea la llave del Secure Enclave (atada a Face ID) y registra la pública.
     func registerThisDevice() async throws -> Device
+    /// Código de un solo uso para vincular el Apple Watch. Agregar un
+    /// dispositivo es un cambio de cuenta: pide Face ID (RF-67).
+    func createWatchLink() async throws -> WatchLinkTicket
 }
 
 final class RemoteDeviceRepository: DeviceRepository {
@@ -78,6 +81,11 @@ final class RemoteDeviceRepository: DeviceRepository {
             endpoint = try await signer.sign(endpoint, reason: "Quitar \(device.name) de tu cuenta")
         }
         _ = try await client.send(endpoint)
+    }
+
+    func createWatchLink() async throws -> WatchLinkTicket {
+        let endpoint = try await signer.sign(API.Devices.createWatchLink(), reason: "Vincular tu Apple Watch")
+        return try await client.send(endpoint)
     }
 
     func registerThisDevice() async throws -> Device {

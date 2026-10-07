@@ -175,9 +175,12 @@ private struct InviteFamilySheet: View {
 struct DevicesView: View {
     let repository: DeviceRepository
 
+    @Environment(AppContainer.self) private var container
+    @Environment(SessionStore.self) private var session
     @State private var list: DeviceList?
     @State private var errorMessage: String?
     @State private var confirmRemoval: Device?
+    @State private var linkSent = false
 
     var body: some View {
         List {
@@ -215,6 +218,8 @@ struct DevicesView: View {
                 FootnoteLabel(text: "Si alguien entra con tu número en otro teléfono, te avisamos aquí.", systemImage: "bell")
                     .padding(.top, 6)
             }
+
+            watchSection
         }
         .readableContentWidth()
         .navigationTitle("Dispositivos")
@@ -232,6 +237,45 @@ struct DevicesView: View {
             Text("Dejará de abrir la pluma y de recibir avisos al instante.")
         }
         .errorAlert($errorMessage)
+        .alert("Abre \(AppInfo.name) en tu Apple Watch", isPresented: $linkSent) {
+            Button("Aceptar", role: .cancel) {}
+        } message: {
+            Text("Ahí termina de vincularse. Después funciona aunque el iPhone no esté cerca.")
+        }
+    }
+
+    /// Vincular el Apple Watch (sección G): el reloj registra su propia llave.
+    @ViewBuilder
+    private var watchSection: some View {
+        let hasWatch = list?.devices.contains { $0.model == .watch } ?? false
+        Section {
+            AsyncButton {
+                await linkWatch()
+            } label: {
+                Label(hasWatch ? "Volver a vincular Apple Watch" : "Vincular Apple Watch", systemImage: "applewatch")
+            }
+            .disabled(!container.watch.canLink)
+        } footer: {
+            Text(container.watch.canLink
+                 ? "Abre la pluma, responde visitas y muestra tu QR desde el reloj, con su propia llave."
+                 : "Instala \(AppInfo.name) en tu Apple Watch desde la app Watch para vincularlo.")
+        }
+    }
+
+    private func linkWatch() async {
+        do {
+            let ticket = try await repository.createWatchLink()
+            var account: Data?
+            if let server = container.mockServer, let userId = session.profile?.id {
+                account = await server.exportAccount(userId: userId)
+            }
+            try container.watch.send(.link(code: ticket.code, mockAccount: account))
+            linkSent = true
+        } catch BiometricError.canceled {
+            return
+        } catch {
+            errorMessage = error.userMessage
+        }
     }
 
     private func load() async {
@@ -245,6 +289,9 @@ struct DevicesView: View {
     private func remove(_ device: Device) async {
         do {
             try await repository.remove(device, signed: true)
+            if device.model == .watch {
+                container.watch.sendIfPossible(.unlinked)
+            }
             await load()
         } catch BiometricError.canceled {
             return

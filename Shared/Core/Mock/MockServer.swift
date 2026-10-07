@@ -203,6 +203,7 @@ actor MockServer {
         if r.match("POST", "auth/otp") != nil { return try requestOTP(r) }
         if r.match("POST", "auth/otp/verify") != nil { return try verifyOTP(r) }
         if r.match("POST", "auth/refresh") != nil { return try refresh(r) }
+        if r.match("POST", "auth/watch-link") != nil { return try completeWatchLink(r) }
         if r.match("POST", "auth/logout") != nil {
             _ = try authenticatedAccount(r)
             return try ok(EmptyResponse())
@@ -229,6 +230,7 @@ actor MockServer {
         if r.match("GET", "devices") != nil { return try listDevices(r) }
         if let params = r.match("DELETE", "devices/:id") { return try removeDevice(r, id: params[0]) }
         if r.match("POST", "devices/key") != nil { return try registerKey(r) }
+        if r.match("POST", "devices/watch-link") != nil { return try createWatchLink(r) }
 
         // A partir de aquí: residente aprobado.
         if r.match("GET", "home") != nil { return try home(r) }
@@ -514,6 +516,87 @@ actor MockServer {
         persistent.accounts[index].devices = devices
         save()
         return try ok(Device(id: deviceId, name: body.name, model: body.model, lastUsedAt: .now, isCurrent: true))
+    }
+
+    // MARK: - Apple Watch
+
+    /// Código de un solo uso: `mock-link.<userId>.<vence>` (5 min).
+    private func createWatchLink(_ r: MockRequest) throws -> (Int, Data) {
+        let account = try requireResident(r, restrictOwner: false)
+        try verifySignature(r)
+        let watches = account.devices.filter { $0.model == .watch && $0.publicKey != nil }
+        guard account.devices.count - watches.count < 3 else {
+            throw MockFailure(409, "DEVICE_LIMIT", "Ya tienes 3 dispositivos. Quita uno para vincular tu Apple Watch.")
+        }
+        let expiresAt = Date.now.addingTimeInterval(300)
+        let code = "mock-link.\(account.profile.id).\(Int(expiresAt.timeIntervalSince1970))"
+        return try ok(WatchLinkTicket(code: code, expiresAt: expiresAt), status: 201)
+    }
+
+    private func completeWatchLink(_ r: MockRequest) throws -> (Int, Data) {
+        let body = try r.decode(WatchLinkRequest.self)
+        let parts = body.code.split(separator: ".").map(String.init)
+        guard parts.count == 3, parts[0] == "mock-link",
+              let expiry = TimeInterval(parts[2]), Date.now.timeIntervalSince1970 < expiry,
+              let index = persistent.accounts.firstIndex(where: { $0.profile.id == parts[1] }) else {
+            throw MockFailure(410, "LINK_EXPIRED", "El código venció. Vuelve a vincular desde tu iPhone.")
+        }
+        guard let keyData = Data(base64Encoded: body.publicKey),
+              (try? P256.Signing.PublicKey(x963Representation: keyData)) != nil else {
+            throw MockFailure(422, "INVALID_KEY", "La llave del reloj no es válida.")
+        }
+        // Un reloj nuevo reemplaza al anterior (solo se usa uno por cuenta).
+        var devices = persistent.accounts[index].devices.filter { $0.id != body.device.id && $0.model != .watch }
+        guard devices.count < 3 else {
+            throw MockFailure(409, "DEVICE_LIMIT", "Ya tienes 3 dispositivos. Quita uno para vincular tu Apple Watch.")
+        }
+        devices.append(MockDevice(
+            id: body.device.id,
+            name: body.device.name,
+            model: .watch,
+            lastUsedAt: .now,
+            publicKey: body.publicKey
+        ))
+        persistent.accounts[index].devices = devices
+        persistent.revokedDeviceIds.remove(body.device.id)
+        save()
+        let response = WatchLinkResponse(tokens: issueTokens(for: parts[1]), profile: currentProfile(index))
+        return try ok(response)
+    }
+
+    // MARK: - Puente entre el iPhone y el reloj (solo mock)
+    //
+    // Con el backend real ambos dispositivos ven el mismo servidor. Con el mock
+    // cada app tiene el suyo, así que el iPhone le pasa al reloj la cuenta y las
+    // visitas simuladas por WatchConnectivity.
+
+    func exportAccount(userId: String) -> Data? {
+        guard let account = persistent.accounts.first(where: { $0.profile.id == userId }) else { return nil }
+        return try? JSONCoding.encoder().encode(account)
+    }
+
+    func importAccount(_ data: Data) {
+        guard let account = try? JSONCoding.decoder().decode(MockAccount.self, from: data) else { return }
+        if let index = persistent.accounts.firstIndex(where: { $0.profile.id == account.profile.id }) {
+            persistent.accounts[index] = account
+        } else {
+            persistent.accounts.append(account)
+        }
+        save()
+    }
+
+    /// El reloj ya se vinculó: el iPhone lo muestra en Dispositivos.
+    func importLinkedWatch(_ watch: LinkedWatch) {
+        guard let index = persistent.accounts.firstIndex(where: { $0.profile.id == watch.userId }) else { return }
+        var devices = persistent.accounts[index].devices.filter { $0.id != watch.deviceId && $0.model != .watch }
+        devices.append(MockDevice(id: watch.deviceId, name: watch.name, model: .watch, lastUsedAt: .now, publicKey: watch.publicKey))
+        persistent.accounts[index].devices = devices
+        save()
+    }
+
+    func importVisit(_ visit: Visit) {
+        visits.removeAll { $0.id == visit.id }
+        visits.insert(visit, at: 0)
     }
 
     // MARK: - Visitas

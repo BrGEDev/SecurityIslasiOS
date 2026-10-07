@@ -19,6 +19,13 @@ nonisolated enum AppInfo {
     /// se active Keychain Sharing en los targets (ver DECISIONES.md).
     static let keychainAccessGroup: String? = nil
 
+    /// Va en el encabezado `X-Client`.
+    #if os(watchOS)
+    static let platform = "watchos"
+    #else
+    static let platform = "ios"
+    #endif
+
     static var version: String {
         Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "1.0"
     }

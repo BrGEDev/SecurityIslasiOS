@@ -48,15 +48,6 @@ nonisolated enum AccountRoute: Hashable {
     case simulation
 }
 
-nonisolated enum PanicEntry: Hashable, Identifiable {
-    /// Desde widget o control: abre la pantalla de mantener presionado (24).
-    case hold
-    /// Ya se mantuvo presionado el botón de Inicio: cuenta regresiva (25).
-    case countdown
-
-    var id: Self { self }
-}
-
 /// Navegación compartida entre pestañas (ej. "Mi QR" desde Inicio).
 @Observable
 final class MainRouter {

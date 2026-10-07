@@ -74,6 +74,29 @@ nonisolated struct DeviceKeyRequest: Codable, Sendable {
     let hardwareBacked: Bool
 }
 
+/// Vínculo del Apple Watch (supuesto, ver DECISIONES.md). El iPhone pide un
+/// código de un solo uso (firmado: agregar un dispositivo es un cambio de
+/// cuenta) y lo pasa al reloj por WatchConnectivity. El reloj crea su propia
+/// llave y canjea el código por su propia sesión.
+nonisolated struct WatchLinkTicket: Codable, Sendable {
+    let code: String
+    let expiresAt: Date
+}
+
+nonisolated struct WatchLinkRequest: Codable, Sendable {
+    let code: String
+    let device: DeviceDescriptor
+    /// Llave pública P-256 del reloj en X9.63, base64.
+    let publicKey: String
+    let attestation: String?
+    let hardwareBacked: Bool
+}
+
+nonisolated struct WatchLinkResponse: Codable, Sendable {
+    let tokens: TokenResponse
+    let profile: UserProfile
+}
+
 nonisolated struct VisitDecisionRequest: Codable, Sendable {
     let decision: VisitDecision
 }
@@ -100,6 +123,11 @@ enum API {
 
         static func me() -> Endpoint<UserProfile> {
             Endpoint(.get, "me")
+        }
+
+        /// El reloj canjea el código que le pasó el iPhone (sin token todavía).
+        static func completeWatchLink(_ body: WatchLinkRequest) throws -> Endpoint<WatchLinkResponse> {
+            try Endpoint(.post, "auth/watch-link", body: body, requiresAuth: false)
         }
     }
 
@@ -132,6 +160,10 @@ enum API {
 
         static func registerKey(_ body: DeviceKeyRequest) throws -> Endpoint<Device> {
             try Endpoint(.post, "devices/key", body: body)
+        }
+
+        static func createWatchLink() -> Endpoint<WatchLinkTicket> {
+            Endpoint(.post, "devices/watch-link")
         }
     }
 

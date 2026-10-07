@@ -81,10 +81,10 @@ struct SimulationView: View {
     private func simulate(_ kind: AccessKind) async {
         guard let server = container.mockServer else { return }
         let visit = await server.simulateArrival(kind: kind)
-        container.notifications.scheduleSimulatedArrival(
-            visit,
-            residence: session.profile?.residence?.name ?? "tu vivienda"
-        )
+        let residence = session.profile?.residence?.name ?? "tu vivienda"
+        container.notifications.scheduleSimulatedArrival(visit, residence: residence)
+        // El reloj vinculado tiene su propio servidor de prueba: se le pasa la visita.
+        container.watch.sendIfPossible(.simulatedVisit(visit, residence: residence))
         container.dataDidChange()
         lastAction = "\(visit.name) está en caseta."
     }

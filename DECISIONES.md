@@ -7,21 +7,26 @@ Supuestos y decisiones tomadas al construir la app de residentes. Cada punto mar
 
 | Capa | Carpeta | Qué contiene |
 |---|---|---|
-| App | `SecurityIslas/App` | Entrada (`IslasSecurityApp`), `AppContainer` (inyección de dependencias), `RootView` (raíz según sesión), `AppInfo` (nombre provisional "Acceso") |
-| Core · Red | `Core/Networking` | `Endpoint`, `APIClient` (actor), `HTTPTransport`, `RequestInterceptor`, `AuthInterceptor`, `APIError` |
-| Core · Sesión | `Core/Session` | `SessionStore` (máquina de estados), `TokenStore` (Keychain), `SessionEventBus` |
-| Core · Seguridad | `Core/Security` | `KeychainStore`, `DeviceKeyManager` (Secure Enclave P-256), `BiometricAuthenticator`, `RequestSigner` |
-| Core · Modelos/API | `Core/Models`, `Core/API` | Modelos de dominio y catálogo de endpoints |
-| Core · Repositorios | `Core/Repositories` | Un protocolo por contrato + implementación remota |
-| Core · Mock | `Core/Mock` | `MockServer` (backend de prueba) y `MockSeed` (datos de las maquetas) |
-| Core · Servicios | `Core/Services` | Ubicación/geocercas, notificaciones, Mi QR (TOTP) |
-| Sistema de diseño | `DesignSystem` | Botones, campos, chips Visita/Servicio, avatares, encabezados |
-| Features | `Features/*` | Registro, Inicio, Visitas, Pluma, Historial, Pánico, Cuenta |
+| App iPhone | `SecurityIslas/App` | Entrada (`IslasSecurityApp`), `AppContainer` (inyección de dependencias), `RootView` (raíz según sesión), `PhoneWatchBridge` (vínculo con el reloj) |
+| App reloj | `SecurityIslasWatch Watch App` | `WatchContainer`, `WatchLinkReceiver`, pantallas del reloj y `QRCodeMatrix` |
+| Compartido | `Shared` | Lo que compilan los dos targets: `AppInfo`, `Formatting`, `Presentation` (chips y textos de visita), `ViewModels` (`GateViewModel`, `PanicViewModel`), `WatchLink` y `Core` |
+| Core · Red | `Shared/Core/Networking` | `Endpoint`, `APIClient` (actor), `HTTPTransport`, `RequestInterceptor`, `AuthInterceptor`, `APIError` |
+| Core · Sesión | `Shared/Core/Session` | `SessionStore` (máquina de estados), `TokenStore` (Keychain), `SessionEventBus` |
+| Core · Seguridad | `Shared/Core/Security` | `KeychainStore`, `DeviceKeyManager` (Secure Enclave P-256), `BiometricAuthenticator`, `RequestSigner` |
+| Core · Modelos/API | `Shared/Core/Models`, `Shared/Core/API` | Modelos de dominio y catálogo de endpoints |
+| Core · Repositorios | `Shared/Core/Repositories` | Un protocolo por contrato + implementación remota |
+| Core · Mock | `Shared/Core/Mock` | `MockServer` (backend de prueba) y `MockSeed` (datos de las maquetas) |
+| Core · Servicios | `Shared/Core/Services` | Ubicación/geocercas, notificaciones, Mi QR (TOTP) |
+| Sistema de diseño | `SecurityIslas/DesignSystem` | Botones, campos, avatares, encabezados (solo iPhone) |
+| Features | `SecurityIslas/Features/*` | Registro, Inicio, Visitas, Pluma, Historial, Pánico, Cuenta |
 
+- **Carpeta `Shared`.** Es una carpeta sincronizada que pertenece a los dos targets (iPhone y
+  reloj): todo archivo nuevo ahí se compila en ambos. Lo exclusivo de una plataforma va detrás de
+  `#if os(iOS)` / `#if os(watchOS)` (CoreImage, Face ID). No se usan excepciones de membresía.
 - **Carpetas en lugar de paquetes SPM.** El brief pide paquetes `AccessCore`, `AccessUI`, `Feature*`.
   Se dejó la misma separación por carpetas dentro del target porque crear paquetes y targets
   nuevos requiere editar el proyecto en Xcode. Mover cada carpeta a su paquete es mecánico:
-  `Core` → `AccessCore`, `DesignSystem` → `AccessUI`, `Features/X` → `FeatureX`.
+  `Shared/Core` → `AccessCore`, `DesignSystem` → `AccessUI`, `Features/X` → `FeatureX`.
 - **Concurrencia.** El target usa Swift 6 con aislamiento `MainActor` por defecto. Todo lo que
   corre fuera del hilo principal está marcado explícitamente: modelos y DTOs `nonisolated`,
   `APIClient`, `AuthInterceptor`, `KeychainTokenStore` y `MockServer` son `actor`.
@@ -144,6 +149,36 @@ Para usar el backend real: lanzar con el argumento `-useLiveAPI YES` y ajustar `
     las columnas según el pliegue real y `onHingeChange` si hace falta. No se usaron todavía porque
     requieren iOS 27.1 / Xcode 27.1 y el proyecto debe compilar con 27.0.
 
+## Apple Watch (sección G)
+
+- **App independiente** (`WKRunsIndependentlyOfCompanionApp`), watchOS 10+. Comparte la carpeta
+  `Shared` con el iPhone: misma red, interceptor de token, sesión, firma, mocks y ViewModels de
+  pluma y pánico.
+- **Vínculo (supuesto, acordar con backend).** WatchConnectivity solo para la sesión inicial:
+  1. iPhone › Cuenta › Dispositivos › "Vincular Apple Watch" → `POST devices/watch-link` firmado
+     (agregar un dispositivo es un cambio de cuenta, RF-67) → código de un solo uso (5 min).
+  2. El iPhone pasa el código al reloj (`WatchEnvelope.link`).
+  3. El reloj crea **su propia llave** y la canjea: `POST auth/watch-link`
+     `{ code, device, publicKey, attestation, hardwareBacked }` → tokens + perfil.
+  4. Desde ahí el reloj usa su propia sesión (refresh con el mismo `AuthInterceptor`) y funciona
+     sin el iPhone cerca.
+- **(supuesto)** Un reloj nuevo reemplaza al anterior y el reloj **sí cuenta** dentro de los
+  3 dispositivos, como en la maqueta (decisión abierta, sección 9).
+- **Sin Face ID en el reloj (RF-68).** La llave del reloj se crea con `[.privateKeyUsage]` y
+  `kSecAttrAccessibleWhenPasscodeSetThisDeviceOnly`: solo firma con el reloj desbloqueado, y el
+  reloj se bloquea al quitárselo. `BiometricAuthenticator` no pide nada en watchOS.
+- **Mi QR en el reloj.** watchOS no tiene CoreImage: `QRCodeMatrix` codifica el QR (modo byte,
+  corrección M, versiones 1–10). Validado módulo a módulo contra una librería de referencia
+  (segno) en las 8 máscaras.
+- **Quitar el reloj** en Dispositivos o cerrar sesión en el iPhone le manda `unlinked` al reloj,
+  que cierra su sesión. Con el backend real, además, el token del reloj deja de servir (RF-65).
+- **Mock.** Cada app tiene su propio `MockServer`. Al vincular, el iPhone le pasa al reloj su
+  cuenta de prueba; las visitas simuladas en el iPhone también se mandan al reloj, y el reloj tiene
+  su propio menú "Simulación". Las respuestas no se sincronizan entre los dos servidores de prueba
+  (con el backend real sí).
+- **Pendiente:** complicaciones y Smart Stack (target Widget Extension de watchOS), escena de
+  notificación personalizada con la foto, Siri en el reloj y caída (fase 5, requiere permiso).
+
 ## Otras decisiones
 
 - La pantalla de Bienvenida conserva el diseño de marca de Islas (imagen `login-hero`, logo, textos y
@@ -161,6 +196,6 @@ Para usar el backend real: lanzar con el argumento `-useLiveAPI YES` y ajustar `
 ## Pendiente (fuera de este cambio)
 
 - Targets de widgets/controles/Live Activity, Notification Service Extension, App Intents (Siri) y
-  la app de watchOS (secciones E y G).
+  widgets de watchOS (secciones E y G).
 - Pruebas unitarias (Swift Testing) y de UI (XCUITest) para registro, autorizar visita y abrir pluma.
 - SwiftLint / SwiftFormat.
