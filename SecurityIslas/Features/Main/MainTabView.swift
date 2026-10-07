@@ -122,6 +122,11 @@ struct MainTabView: View {
                 Tab("Cuenta", systemImage: "person.crop.circle", value: MainTab.account) { accountTab }
             }
             .tabViewStyle(.sidebarAdaptable)
+            .panicTabAccessory {
+                router.panic = .countdown
+            } onAccessibilityActivate: {
+                router.panic = .hold
+            }
         } else {
             TabView(selection: $router.selectedTab) {
                 homeTab

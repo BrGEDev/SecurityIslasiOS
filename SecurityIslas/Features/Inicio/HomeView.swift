@@ -90,15 +90,10 @@ struct HomeView: View {
             .sharedBackgroundHidden()
         }
         .refreshable { await model.load() }
-        .safeAreaInset(edge: .bottom) {
-            PanicHoldBar {
-                router.panic = .countdown
-            } onAccessibilityActivate: {
-                router.panic = .hold
-            }
-            .padding(.horizontal)
-            .padding(.bottom, 8)
-            .readableContentWidth(520)
+        .legacyPanicBar {
+            router.panic = .countdown
+        } onAccessibilityActivate: {
+            router.panic = .hold
         }
         .task(id: container.dataVersion) {
             await model.load()
