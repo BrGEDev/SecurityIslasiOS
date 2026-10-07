@@ -2,9 +2,9 @@
 //  WelcomeView.swift
 //  SecurityIslas
 //
-//  Pantalla 1 (Bienvenida). Debe quedar tal cual la maqueta: un solo botón
-//  "Comenzar" y el enlace de invitación. Quien ya tiene cuenta también toca
-//  "Comenzar" (RF-61).
+//  Pantalla 1 (Bienvenida). Conserva el diseño de marca de Islas: imagen de
+//  fondo, logo y textos originales. Un solo botón principal y el enlace de
+//  invitación; quien ya tiene cuenta también entra por aquí (RF-61).
 //
 
 import SwiftUI
@@ -15,70 +15,89 @@ struct WelcomeView: View {
     @State private var showInviteSheet = false
 
     var body: some View {
-        ScrollView {
-            VStack(spacing: 28) {
-                Spacer(minLength: 40)
+        GeometryReader { proxy in
+            let ancho = proxy.size.width
 
-                VStack(spacing: 14) {
-                    Image(systemName: "checkmark.shield")
-                        .font(.system(size: 40, weight: .semibold))
-                        .foregroundStyle(.white)
-                        .frame(width: 88, height: 88)
-                        .background(
-                            LinearGradient(colors: [.blue, Color(red: 0.05, green: 0.3, blue: 0.85)], startPoint: .top, endPoint: .bottom),
-                            in: .rect(cornerRadius: 22)
-                        )
-                        .shadow(color: .blue.opacity(0.35), radius: 16, y: 8)
-                        .accessibilityHidden(true)
-
-                    Text(AppInfo.name)
-                        .font(.system(size: 40, weight: .bold))
-
-                    Text("La entrada de tu fraccionamiento,\nen tu teléfono.")
-                        .font(.title3)
-                        .foregroundStyle(.secondary)
-                        .multilineTextAlignment(.center)
-                }
+            ZStack(alignment: .top) {
+                Image(.loginHero)
+                    .resizable()
+                    .scaledToFill()
+                    .frame(width: ancho, height: proxy.size.height + proxy.safeAreaInsets.top + proxy.safeAreaInsets.bottom, alignment: .top)
+                    .clipped()
+                    .ignoresSafeArea()
+                    .accessibilityHidden(true)
 
                 VStack(spacing: 10) {
-                    feature("bell", "Te avisamos cuando llega tu visita")
-                    feature("road.lanes", "Abre la pluma desde tu iPhone o Siri")
-                    feature("exclamationmark.triangle", "Botón de pánico conectado a caseta")
-                }
+                    Image(.logo)
+                        .resizable()
+                        .renderingMode(.template)
+                        .colorInvert()
+                        .scaledToFit()
+                        .frame(width: ancho * 0.5)
+                        .accessibilityLabel("Islas")
 
-                if let notice = session.notice {
-                    FootnoteLabel(text: notice, systemImage: "info.circle")
-                }
+                    VStack(spacing: 30) {
+                        Text(AppInfo.name)
+                            .foregroundStyle(.cyan)
+                            .font(.title.bold())
 
-                if let code = model.inviteCode {
-                    Label("Invitación lista · código \(code)", systemImage: "checkmark.seal.fill")
-                        .font(.footnote.weight(.semibold))
-                        .foregroundStyle(.green)
+                        Text("La entrada a tu fraccionamiento en tu teléfono")
+                            .foregroundStyle(.white)
+                            .font(.title2.bold())
+                            .multilineTextAlignment(.center)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    .padding(.vertical, 30)
+                    .padding(.horizontal)
+                    .frame(width: ancho)
+
+                    Spacer()
+
+                    VStack(spacing: 15) {
+                        feature("bell.fill", "Te avisamos cuando llega tu visita y autoriza su entrada")
+                        feature("car.rear.road.lane", "Abre la pluma desde tu iPhone, Apple Watch o con Siri")
+                        feature("light.beacon.min.fill", "Aviso de emergencia inmediata con caseta y tus contactos")
+
+                        if let notice = session.notice {
+                            Label(notice, systemImage: "info.circle")
+                                .font(.footnote)
+                                .foregroundStyle(.white)
+                        }
+
+                        if let code = model.inviteCode {
+                            Label("Invitación lista · código \(code)", systemImage: "checkmark.seal.fill")
+                                .font(.footnote.weight(.semibold))
+                                .foregroundStyle(.green)
+                        }
+
+                        Spacer(minLength: 5)
+
+                        Button("Continuar") {
+                            session.notice = nil
+                            model.path.append(.phone)
+                        }
+                        .buttonStyle(IslasButton())
+
+                        Button {
+                            showInviteSheet = true
+                        } label: {
+                            Label("Tengo un enlace de invitación", systemImage: "link")
+                                .foregroundStyle(.white)
+                        }
+                        .padding()
+                    }
+                    .padding()
+                    .frame(maxWidth: ancho)
+
+                    Spacer()
+
+                    LegalLinks()
+                        .padding()
+
+                    Spacer()
                 }
+                .padding(.top, 60)
             }
-            .padding(.horizontal, 24)
-        }
-        .scrollBounceBehavior(.basedOnSize)
-        .background(Color(.systemGroupedBackground))
-        .safeAreaInset(edge: .bottom) {
-            VStack(spacing: 14) {
-                Button("Comenzar") {
-                    session.notice = nil
-                    model.path.append(.phone)
-                }
-                .buttonStyle(.islasPrimary)
-
-                Button {
-                    showInviteSheet = true
-                } label: {
-                    Label("Tengo un enlace de invitación", systemImage: "link")
-                        .font(.body.weight(.medium))
-                }
-
-                LegalLinks()
-            }
-            .padding(.horizontal, 24)
-            .padding(.bottom, 8)
         }
         .toolbar(.hidden, for: .navigationBar)
         .sheet(isPresented: $showInviteSheet) {
@@ -90,16 +109,17 @@ struct WelcomeView: View {
     }
 
     private func feature(_ symbol: String, _ text: String) -> some View {
-        HStack(spacing: 14) {
+        HStack(spacing: 15) {
             Image(systemName: symbol)
-                .font(.body.weight(.semibold))
+                .resizable()
+                .scaledToFit()
+                .frame(width: 20, height: 20)
                 .foregroundStyle(Color.accentColor)
-                .frame(width: 24)
+
             Text(text)
                 .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .padding(16)
-        .cardBackground()
+        .backgroundLabel()
         .accessibilityElement(children: .combine)
     }
 }

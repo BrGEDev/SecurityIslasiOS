@@ -123,6 +123,9 @@ Para usar el backend real: lanzar con el argumento `-useLiveAPI YES` y ajustar `
 
 ## Otras decisiones
 
+- La pantalla de Bienvenida conserva el diseño de marca de Islas (imagen `login-hero`, logo, textos y
+  botón "Continuar"). Prevalece sobre la maqueta 1 del brief por ser branding de la empresa.
+
 - Lada México corregida a **+52** (estaba en 51).
 - Se agregaron al Info.plist generado: `NSFaceIDUsageDescription`, `NSLocationWhenInUseUsageDescription`
   y `NSLocationAlwaysAndWhenInUseUsageDescription` (sin ellas la app se cierra al pedir Face ID).

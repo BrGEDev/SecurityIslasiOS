@@ -114,7 +114,7 @@ struct BackgroundLabel: ViewModifier {
         } else {
             content
                 .padding()
-                .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 20))
+                .background(.ultraThinMaterial, in: .rect(cornerRadius: 20))
         }
     }
 }
@@ -130,27 +130,31 @@ extension View {
     }
 }
 
+/// Aviso de privacidad y términos (diseño original de la pantalla de acceso).
 struct LegalLinks: View {
     var body: some View {
         Text(makeText())
             .font(.footnote)
-            .foregroundStyle(.secondary)
+            .foregroundStyle(.white)
             .multilineTextAlignment(.center)
     }
 
     private func makeText() -> AttributedString {
-        var text = AttributedString("Al continuar aceptas el ")
-        var privacy = AttributedString("Aviso de privacidad")
-        privacy.link = URL(string: "https://islasgower.com.mx")
-        privacy.underlineStyle = .single
-        text.append(privacy)
-        text.append(AttributedString(" y los "))
-        var terms = AttributedString("Términos")
-        terms.link = URL(string: "https://islasgower.com.mx")
-        terms.underlineStyle = .single
-        text.append(terms)
-        text.append(AttributedString("."))
-        return text
+        var attributed = AttributedString("Al continuar aceptas el ")
+        if let url = URL(string: "https://islasgower.com.mx") {
+            var aviso = AttributedString("Aviso de privacidad")
+            aviso.link = url
+            aviso.foregroundColor = .blue
+            attributed.append(aviso)
+        }
+        attributed.append(AttributedString(" y los "))
+        if let url = URL(string: "https://islasgower.com.mx") {
+            var terminos = AttributedString("Términos y condiciones.")
+            terminos.link = url
+            terminos.foregroundColor = .blue
+            attributed.append(terminos)
+        }
+        return attributed
     }
 }
 
