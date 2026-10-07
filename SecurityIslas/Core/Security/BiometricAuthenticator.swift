@@ -84,7 +84,16 @@ final class BiometricAuthenticator {
 
         var error: NSError?
         guard context.canEvaluatePolicy(.deviceOwnerAuthentication, error: &error) else {
+            #if targetEnvironment(simulator)
+            // El simulador no tiene código y Face ID viene sin registrar
+            // (Features › Face ID › Enrolled). Para poder desarrollar se deja
+            // pasar sin biometría; en un iPhone real esto nunca ocurre.
+            cachedContext = context
+            authenticatedAt = .now
+            return context
+            #else
             throw BiometricError(error)
+            #endif
         }
 
         try await evaluate(context, reason: reason)
