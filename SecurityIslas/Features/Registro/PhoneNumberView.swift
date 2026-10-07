@@ -11,6 +11,8 @@ import SwiftUI
 struct PhoneNumberView: View {
     @Bindable var model: OnboardingModel
     @FocusState private var focused: Bool
+    /// Texto visible ya formateado ("222 123 4567"); el modelo guarda solo dígitos.
+    @State private var phoneText = ""
 
     var body: some View {
         ScrollView {
@@ -39,13 +41,10 @@ struct PhoneNumberView: View {
                         }
                         .accessibilityLabel("Lada \(model.country.dialCode)")
 
-                        TextField("222 123 4567", text: Binding(
-                            get: { PhoneNumber.group(model.phoneDigits) },
-                            set: { model.updatePhone($0) }
-                        ))
-                        .keyboardType(.numberPad)
-                        .textContentType(.telephoneNumber)
-                        .font(.title3)
+                        TextField("222 123 4567", text: $phoneText)
+                            .keyboardType(.numberPad)
+                            .textContentType(.telephoneNumber)
+                            .font(.title3)
                         .focused($focused)
                         .textFieldStyle(FieldStyle())
                     }
@@ -72,7 +71,21 @@ struct PhoneNumberView: View {
         }
         .onAppear {
             model.errorMessage = nil
+            phoneText = PhoneNumber.group(model.phoneDigits)
             focused = true
         }
+        .onChange(of: phoneText) { _, newValue in
+            renderPhone(newValue)
+        }
+    }
+
+    /// Solo permite 10 dígitos y los muestra agrupados 3-3-4.
+    private func renderPhone(_ value: String) {
+        let digits = String(value.filter(\.isNumber).prefix(10))
+        let formatted = PhoneNumber.group(digits)
+        if formatted != value {
+            phoneText = formatted
+        }
+        model.updatePhone(digits)
     }
 }
