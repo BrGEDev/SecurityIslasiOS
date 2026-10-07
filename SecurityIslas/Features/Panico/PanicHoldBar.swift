@@ -67,20 +67,8 @@ struct PanicHoldBar: View {
         .clipShape(Capsule())
         .shadow(color: .red.opacity(0.3), radius: 12, y: 6)
         .contentShape(Capsule())
-        .onLongPressGesture(minimumDuration: Self.holdDuration, maximumDistance: 40) {
-            progress = 0
-            isPressing = false
-            onComplete()
-        } onPressingChanged: { pressing in
-            isPressing = pressing
-            if pressing {
-                withAnimation(.linear(duration: Self.holdDuration)) { progress = 1 }
-            } else {
-                withAnimation(.spring(duration: 0.3)) { progress = 0 }
-            }
-        }
+        .holdToConfirm(duration: Self.holdDuration, progress: $progress, isPressing: $isPressing, onComplete: onComplete)
         .animation(.spring(duration: 0.25), value: isPressing)
-        .sensoryFeedback(.impact(weight: .heavy), trigger: isPressing) { _, new in new }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel("Botón de pánico")
         .accessibilityHint("Mantén presionado tres segundos para enviar una alerta.")
@@ -152,27 +140,19 @@ struct PanicAccessoryView: View {
     }
 }
 
-/// Mantener presionado 3 s con relleno de progreso y vibración al empezar.
+/// Mantener presionado 3 s con relleno de progreso y rampa háptica.
 struct PanicHoldGesture: ViewModifier {
     @Binding var progress: CGFloat
     @Binding var isPressing: Bool
     let onComplete: () -> Void
 
     func body(content: Content) -> some View {
-        content
-            .onLongPressGesture(minimumDuration: PanicHoldBar.holdDuration, maximumDistance: 40) {
-                progress = 0
-                isPressing = false
-                onComplete()
-            } onPressingChanged: { pressing in
-                isPressing = pressing
-                if pressing {
-                    withAnimation(.linear(duration: PanicHoldBar.holdDuration)) { progress = 1 }
-                } else {
-                    withAnimation(.spring(duration: 0.3)) { progress = 0 }
-                }
-            }
-            .sensoryFeedback(.impact(weight: .heavy), trigger: isPressing) { _, new in new }
+        content.holdToConfirm(
+            duration: PanicHoldBar.holdDuration,
+            progress: $progress,
+            isPressing: $isPressing,
+            onComplete: onComplete
+        )
     }
 }
 

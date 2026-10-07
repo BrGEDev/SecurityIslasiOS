@@ -64,6 +64,7 @@ private struct PanicHoldScreen: View {
     let onClose: () -> Void
 
     @State private var progress: CGFloat = 0
+    @State private var isPressing = false
 
     var body: some View {
         ZStack {
@@ -90,13 +91,14 @@ private struct PanicHoldScreen: View {
                 }
                 .frame(width: 180, height: 180)
                 .contentShape(Circle())
-                .onLongPressGesture(minimumDuration: PanicHoldBar.holdDuration) {
-                    onComplete()
-                } onPressingChanged: { pressing in
-                    withAnimation(pressing ? .linear(duration: PanicHoldBar.holdDuration) : .easeOut(duration: 0.2)) {
-                        progress = pressing ? 1 : 0
-                    }
-                }
+                .scaleEffect(isPressing ? 0.95 : 1)
+                .animation(.spring(duration: 0.3), value: isPressing)
+                .holdToConfirm(
+                    duration: PanicHoldBar.holdDuration,
+                    progress: $progress,
+                    isPressing: $isPressing,
+                    onComplete: onComplete
+                )
                 .accessibilityLabel("Botón de pánico")
                 .accessibilityAddTraits(.isButton)
                 .accessibilityAction { onComplete() }
@@ -165,7 +167,11 @@ private struct PanicCountdownScreen: View {
             }
             .padding()
         }
-        .sensoryFeedback(.impact(weight: .heavy, intensity: 1), trigger: remaining)
+        // Cada segundo vibra más fuerte conforme se acerca el envío (5 → 1).
+        .sensoryFeedback(trigger: remaining) { _, new in
+            guard let new else { return nil }
+            return .impact(weight: .heavy, intensity: min(1, 1.1 - Double(new) * 0.14))
+        }
         .animation(.snappy, value: remaining)
     }
 }
