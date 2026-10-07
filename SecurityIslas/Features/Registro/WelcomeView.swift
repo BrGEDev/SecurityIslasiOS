@@ -65,7 +65,7 @@ struct WelcomeView: View {
 
                 Spacer(minLength: 16)
 
-                VStack(spacing: 4) {
+                VStack(spacing: 0) {
                     Button("Continuar") {
                         session.notice = nil
                         model.path.append(.phone)
@@ -76,9 +76,12 @@ struct WelcomeView: View {
                         showInviteSheet = true
                     } label: {
                         Label("Tengo un enlace de invitación", systemImage: "link")
+                            .font(.subheadline.weight(.medium))
                             .foregroundStyle(.white)
+                            .frame(minHeight: 44)
                     }
-                    .padding(.vertical, 10)
+                    .padding(.top, 14)
+                    .padding(.bottom, 18)
 
                     LegalLinks()
                         .padding(.horizontal)
