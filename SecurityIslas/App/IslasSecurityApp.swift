@@ -13,6 +13,7 @@ struct IslasSecurityApp: App {
     var body: some Scene {
         WindowGroup {
             RootView()
+                .environment(\.locale, .app)
                 .environment(appDelegate.container)
                 .environment(appDelegate.container.session)
                 .onOpenURL { url in

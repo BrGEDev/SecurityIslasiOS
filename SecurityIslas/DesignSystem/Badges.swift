@@ -125,7 +125,7 @@ extension Visit {
         case .authorized: respondedBy.map { "Autorizó \($0)" } ?? "Autorizada"
         case .rejected: respondedBy.map { "Rechazó \($0)" } ?? "Rechazada"
         case .noResponse: "Sin respuesta"
-        case .entered: enteredAt.map { "Entró \($0.formatted(.dateTime.hour().minute()))" } ?? "Entró"
+        case .entered: enteredAt.map { "Entró \($0.formatted(.dateTime.hour().minute().locale(.app)))" } ?? "Entró"
         case .exited: respondedBy.map { "Autorizó \($0)" } ?? "Salió"
         case .scheduled: "Por llegar"
         case .sleepover: "Se queda a dormir"

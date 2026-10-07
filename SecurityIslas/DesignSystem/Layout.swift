@@ -143,6 +143,27 @@ struct InlineError: View {
     }
 }
 
+/// Label con el ícono en una columna de ancho fijo: los textos de varias filas
+/// quedan alineados aunque los símbolos tengan anchos distintos (`car.side` es
+/// ancho, `sun.max` es cuadrado).
+struct AlignedIconLabelStyle: LabelStyle {
+    var spacing: CGFloat = 10
+    @ScaledMetric(relativeTo: .body) private var iconWidth: CGFloat = 24
+
+    func makeBody(configuration: Configuration) -> some View {
+        HStack(alignment: .firstTextBaseline, spacing: spacing) {
+            configuration.icon
+                .frame(width: iconWidth, alignment: .center)
+            configuration.title
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }
+    }
+}
+
+extension LabelStyle where Self == AlignedIconLabelStyle {
+    static var alignedIcon: AlignedIconLabelStyle { AlignedIconLabelStyle() }
+}
+
 /// Nota pequeña con ícono, como "Mientras tanto no puedes abrir la pluma...".
 struct FootnoteLabel: View {
     let text: String
@@ -154,6 +175,7 @@ struct FootnoteLabel: View {
         } icon: {
             Image(systemName: systemImage)
         }
+        .labelStyle(.alignedIcon)
         .font(.footnote)
         .foregroundStyle(.secondary)
         .frame(maxWidth: .infinity, alignment: .leading)
@@ -256,20 +278,35 @@ struct ActivityShareSheet: UIViewControllerRepresentable {
 
 // MARK: - Formatos
 
+extension Locale {
+    /// La app está en español de México aunque el iPhone esté en otro idioma
+    /// (fechas como "31 dic 2026", no "31 Dec 2026").
+    static let app = Locale(identifier: "es_MX")
+}
+
+extension String {
+    /// Solo la primera letra en mayúscula: "todos los días" → "Todos los días".
+    /// (`capitalized` pondría "Todos Los Días".)
+    var sentenceCased: String {
+        guard let first else { return self }
+        return first.uppercased() + dropFirst()
+    }
+}
+
 extension Date {
     /// "hoy 20:00", "ayer 23:10", "vie 9 oct · 15:00"
     var relativeDayAndTime: String {
-        let time = formatted(.dateTime.hour().minute())
+        let time = formatted(.dateTime.hour().minute().locale(.app))
         let calendar = Calendar.current
         if calendar.isDateInToday(self) { return "hoy \(time)" }
         if calendar.isDateInYesterday(self) { return "ayer \(time)" }
         if calendar.isDateInTomorrow(self) { return "mañana \(time)" }
-        return "\(formatted(.dateTime.weekday(.abbreviated).day().month(.abbreviated))) · \(time)"
+        return "\(formatted(.dateTime.weekday(.abbreviated).day().month(.abbreviated).locale(.app))) · \(time)"
     }
 
-    var shortTime: String { formatted(.dateTime.hour().minute()) }
+    var shortTime: String { formatted(.dateTime.hour().minute().locale(.app)) }
 
-    var longDay: String { formatted(.dateTime.day().month(.abbreviated).year()) }
+    var longDay: String { formatted(.dateTime.day().month(.abbreviated).year().locale(.app)) }
 }
 
 extension URL {

@@ -210,7 +210,7 @@ struct WorkPermitView: View {
             Image(systemName: icon).foregroundStyle(tint).font(.title3)
             VStack(alignment: .leading, spacing: 2) {
                 Text(title).font(.subheadline.weight(.semibold))
-                Text("Enviado el \(permit.submittedAt.formatted(.dateTime.day().month(.abbreviated)))")
+                Text("Enviado el \(permit.submittedAt.formatted(.dateTime.day().month(.abbreviated).locale(.app)))")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }

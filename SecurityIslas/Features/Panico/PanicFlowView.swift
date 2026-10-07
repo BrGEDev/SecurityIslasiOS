@@ -254,7 +254,7 @@ private struct PanicActiveScreen: View {
     private var guardRows: [Row] {
         var rows: [Row] = []
         if let guardName = alert.guardName {
-            let confirmed = alert.guardConfirmedAt.map { $0.formatted(.relative(presentation: .named)) } ?? ""
+            let confirmed = alert.guardConfirmedAt.map { $0.formatted(.relative(presentation: .named).locale(.app)) } ?? ""
             rows.append(Row(id: "guard", icon: "checkmark", tint: .green, title: "\(guardName) atiende", subtitle: "Confirmó \(confirmed) · va en camino"))
         } else {
             rows.append(Row(id: "guard", icon: "clock", tint: .orange, title: "Avisando a los guardias en turno", subtitle: alert.status == .received ? "Alerta recibida en caseta" : "Enviando…"))

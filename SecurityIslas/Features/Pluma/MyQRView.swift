@@ -131,9 +131,10 @@ struct MyQRView: View {
                 .foregroundStyle(.secondary)
         } icon: {
             Image(systemName: systemImage)
+                .font(.footnote.weight(.semibold))
                 .foregroundStyle(Color.accentColor)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .labelStyle(.alignedIcon)
     }
 
     private func loadSeed() async {

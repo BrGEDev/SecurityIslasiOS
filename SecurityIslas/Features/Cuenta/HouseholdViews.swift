@@ -177,7 +177,7 @@ struct DevicesView: View {
                             Text(device.name).font(.subheadline.weight(.semibold))
                             Text(device.isCurrent
                                  ? "Este iPhone · \(BiometricAuthenticator().biometryName)"
-                                 : "Último uso \(device.lastUsedAt.formatted(.relative(presentation: .named)))")
+                                 : "Último uso \(device.lastUsedAt.formatted(.relative(presentation: .named).locale(.app)))")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }

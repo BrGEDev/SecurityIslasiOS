@@ -104,7 +104,7 @@ struct DeviceLimitView: View {
                     } label: {
                         RadioRow(
                             title: device.name,
-                            subtitle: "Último uso \(device.lastUsedAt.formatted(.relative(presentation: .named)))",
+                            subtitle: "Último uso \(device.lastUsedAt.formatted(.relative(presentation: .named).locale(.app)))",
                             isSelected: model.deviceToRemove == device
                         )
                     }

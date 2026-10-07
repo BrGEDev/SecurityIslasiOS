@@ -6,6 +6,7 @@
 //
 
 import SwiftUI
+import UIKit
 
 struct NewRecurringView: View {
     let repository: VisitsRepository
@@ -147,21 +148,40 @@ struct RecurringDetailView: View {
 
     var body: some View {
         List {
+            // Encabezado como en Contactos: monograma, nombre y acciones rápidas.
             Section {
-                VStack(spacing: 8) {
-                    InitialsAvatar(initials: recurring.initials, size: 72)
-                    Text(recurring.name).font(.title2.bold())
-                    Text([recurring.kind.title, recurring.detail].compactMap { $0 }.joined(separator: " · "))
-                        .foregroundStyle(.secondary)
+                VStack(spacing: 14) {
+                    VStack(spacing: 6) {
+                        InitialsAvatar(initials: recurring.initials, size: 84, tint: recurring.kind == .service ? .purple : Color(.systemGray))
+                        Text(recurring.name)
+                            .font(.title2.bold())
+                            .multilineTextAlignment(.center)
+                        Text([recurring.kind.title, recurring.detail].compactMap { $0 }.joined(separator: " · "))
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                    }
+
+                    HStack(spacing: 10) {
+                        ShareLink(item: InvitationMessage.text(for: recurring)) {
+                            ContactActionLabel(title: "Reenviar", systemImage: "square.and.arrow.up")
+                        }
+                        Button {
+                            UIPasteboard.general.url = recurring.shareURL
+                        } label: {
+                            ContactActionLabel(title: "Copiar enlace", systemImage: "link")
+                        }
+                    }
+                    .buttonStyle(PressableCardStyle())
                 }
                 .frame(maxWidth: .infinity)
                 .listRowBackground(Color.clear)
+                .listRowInsets(EdgeInsets(top: 8, leading: 0, bottom: 4, trailing: 0))
             }
 
             Section {
                 LabeledContent("Días y horario") {
                     Text(recurring.allDay
-                         ? Weekday.summary(recurring.weekdays).capitalized
+                         ? Weekday.summary(recurring.weekdays).sentenceCased
                          : "\(Weekday.summary(recurring.weekdays)) · \(recurring.startTime.formatted) a \(recurring.endTime.formatted)")
                 }
                 LabeledContent("Vence", value: recurring.expiresOn.longDay)
@@ -173,25 +193,22 @@ struct RecurringDetailView: View {
                     Text("Todavía no hay entradas.").foregroundStyle(.secondary)
                 }
                 ForEach(recurring.recentEntries) { entry in
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(entry.enteredAt.formatted(.dateTime.weekday(.wide).day().month(.abbreviated)).capitalized)
-                            .font(.subheadline.weight(.semibold))
-                        Text("Entró \(entry.enteredAt.shortTime)\(entry.exitedAt.map { " · salió \($0.shortTime)" } ?? "")")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
+                    LabeledContent {
+                        Text(entry.exitedAt.map { "\(entry.enteredAt.shortTime) – \($0.shortTime)" } ?? entry.enteredAt.shortTime)
+                            .monospacedDigit()
+                    } label: {
+                        Text(entry.enteredAt.formatted(.dateTime.weekday(.wide).day().month(.abbreviated).locale(.app)).sentenceCased)
                     }
                 }
+            } footer: {
+                Text("Cada vez que entra te avisamos.")
             }
-        }
-        .safeAreaInset(edge: .bottom) {
-            BottomActionBar {
-                ShareLink(item: InvitationMessage.text(for: recurring)) {
-                    Label("Reenviar código", systemImage: "square.and.arrow.up")
-                }
-                .buttonStyle(.islasSecondary)
 
+            // Acción destructiva al final, como "Bloquear contacto".
+            Section {
                 Button("Revocar código", role: .destructive) { confirmRevoke = true }
-                    .foregroundStyle(.red)
+            } footer: {
+                Text("Deja de funcionar de inmediato en las casetas con conexión. Te pediremos \(BiometricAuthenticator().biometryName).")
             }
         }
         .readableContentWidth()
@@ -279,5 +296,24 @@ struct PackagePolicyView: View {
         } catch {
             errorMessage = error.userMessage
         }
+    }
+}
+
+/// Botón de acción bajo el encabezado, como los de Contactos.
+private struct ContactActionLabel: View {
+    let title: String
+    let systemImage: String
+
+    var body: some View {
+        VStack(spacing: 6) {
+            Image(systemName: systemImage)
+                .font(.title3.weight(.medium))
+            Text(title)
+                .font(.caption.weight(.medium))
+                .lineLimit(1)
+        }
+        .foregroundStyle(Color.accentColor)
+        .frame(maxWidth: .infinity, minHeight: 58)
+        .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 14, style: .continuous))
     }
 }

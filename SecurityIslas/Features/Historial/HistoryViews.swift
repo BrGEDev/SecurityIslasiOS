@@ -99,7 +99,7 @@ struct HistoryView: View {
         let calendar = Calendar.current
         if calendar.isDateInToday(day) { return "Hoy" }
         if calendar.isDateInYesterday(day) { return "Ayer" }
-        return day.formatted(.dateTime.weekday(.wide).day().month(.wide)).capitalized
+        return day.formatted(.dateTime.weekday(.wide).day().month(.wide).locale(.app)).sentenceCased
     }
 }
 

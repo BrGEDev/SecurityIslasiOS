@@ -136,7 +136,7 @@ enum InvitationMessage {
         let firstName = invitation.guestName.split(separator: " ").first.map(String.init) ?? invitation.guestName
         let day = Calendar.current.isDateInToday(invitation.startsAt)
             ? "hoy"
-            : invitation.startsAt.formatted(.dateTime.weekday(.wide).day().month(.wide))
+            : invitation.startsAt.formatted(.dateTime.weekday(.wide).day().month(.wide).locale(.app))
         let greeting = invitation.isEvent ? "¡Hola!" : "Hola \(firstName),"
         let place = host?.residence.map { " en \($0.name)" } ?? ""
         return """
@@ -164,7 +164,7 @@ struct InvitationPreviewView: View {
                 Text("Hola, \(invitation.guestName.split(separator: " ").first.map(String.init) ?? invitation.guestName)")
                     .font(.largeTitle.bold())
                 Text("\(profile.firstName) te invitó a \(Text(profile.residence?.name ?? "").bold())")
-                Text("\(invitation.startsAt.relativeDayAndTime.capitalized) a \(invitation.endsAt.shortTime)")
+                Text("\(invitation.startsAt.relativeDayAndTime.sentenceCased) a \(invitation.endsAt.shortTime)")
                     .foregroundStyle(.secondary)
 
                 if let image = QRCodeRenderer.image(for: invitation.shareURL.absoluteString) {
