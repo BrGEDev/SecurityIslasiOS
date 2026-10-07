@@ -97,23 +97,54 @@ final class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
         center.add(request, withCompletionHandler: nil)
     }
 
+    /// Quita el aviso de una visita ya respondida (en la app o desde otro
+    /// dispositivo) para que no se pueda volver a contestar desde ahí.
+    nonisolated static func withdraw(visitId: String) {
+        let center = UNUserNotificationCenter.current()
+        center.removePendingNotificationRequests(withIdentifiers: [visitId])
+        center.removeDeliveredNotifications(withIdentifiers: [visitId])
+    }
+
+    /// Aviso informativo inmediato, por ejemplo cuando una respuesta dada
+    /// desde la notificación no se pudo aplicar.
+    func notify(title: String, body: String) {
+        let content = UNMutableNotificationContent()
+        content.title = title
+        content.body = body
+        content.categoryIdentifier = NotificationCategory.visitInfo
+        let request = UNNotificationRequest(identifier: UUID().uuidString, content: content, trigger: nil)
+        center.add(request, withCompletionHandler: nil)
+    }
+
     // MARK: - UNUserNotificationCenterDelegate
+
+    // Se usan las variantes con completion handler y no las `async`: iOS llama
+    // al delegado fuera del hilo principal y el puente de la variante `async`
+    // invoca el handler desde un hilo de fondo, lo que hace que UIKit truene
+    // ("Call must be made on main thread") al responder desde el aviso.
 
     nonisolated func userNotificationCenter(
         _ center: UNUserNotificationCenter,
-        willPresent notification: UNNotification
-    ) async -> UNNotificationPresentationOptions {
-        [.banner, .list, .sound]
+        willPresent notification: UNNotification,
+        withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
+    ) {
+        completionHandler([.banner, .list, .sound])
     }
 
     nonisolated func userNotificationCenter(
         _ center: UNUserNotificationCenter,
-        didReceive response: UNNotificationResponse
-    ) async {
+        didReceive response: UNNotificationResponse,
+        withCompletionHandler completionHandler: @escaping () -> Void
+    ) {
         let action = response.actionIdentifier
         let visitId = response.notification.request.content.userInfo["visitId"] as? String
-        guard let visitId else { return }
-        await handle(action: action, visitId: visitId)
+        nonisolated(unsafe) let completion = completionHandler
+        Task { @MainActor [weak self] in
+            if let self, let visitId {
+                await self.handle(action: action, visitId: visitId)
+            }
+            completion()
+        }
     }
 
     private func handle(action: String, visitId: String) async {

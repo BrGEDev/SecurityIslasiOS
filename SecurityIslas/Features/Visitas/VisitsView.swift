@@ -45,6 +45,8 @@ final class VisitsViewModel {
         } catch {
             errorMessage = error.userMessage
         }
+        // Con respuesta o con 409, el aviso de esa visita ya no sirve.
+        NotificationManager.withdraw(visitId: visit.id)
         await load(.today)
     }
 
