@@ -58,6 +58,19 @@ struct ListHeaderSection<Accessory: View>: View {
     }
 }
 
+extension ToolbarContent {
+    /// `sharedBackgroundVisibility(.hidden)` solo existe desde iOS 26 (quita el
+    /// fondo de Liquid Glass compartido del item). Antes no hay fondo que quitar.
+    @ToolbarContentBuilder
+    func sharedBackgroundHidden() -> some ToolbarContent {
+        if #available(iOS 26.0, *) {
+            sharedBackgroundVisibility(.hidden)
+        } else {
+            self
+        }
+    }
+}
+
 /// "1 de 4" en la esquina superior derecha.
 struct OnboardingStep: ViewModifier {
     let step: Int
@@ -65,12 +78,8 @@ struct OnboardingStep: ViewModifier {
 
     func body(content: Content) -> some View {
         content.toolbar {
-            if #available(iOS 26.0, *) {
-                ToolbarItem(placement: .topBarTrailing) { label }
-                    .sharedBackgroundVisibility(.hidden)
-            } else {
-                ToolbarItem(placement: .topBarTrailing) { label }
-            }
+            ToolbarItem(placement: .topBarTrailing) { label }
+                .sharedBackgroundHidden()
         }
     }
 

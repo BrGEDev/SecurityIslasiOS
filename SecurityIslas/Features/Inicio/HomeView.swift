@@ -87,6 +87,7 @@ struct HomeView: View {
                 }
                 .accessibilityLabel("Cuenta")
             }
+            .sharedBackgroundHidden()
         }
         .refreshable { await model.load() }
         .safeAreaInset(edge: .bottom) {

@@ -77,6 +77,7 @@ struct OwnerHomeView: View {
                 }
                 .accessibilityLabel("Cuenta")
             }
+            .sharedBackgroundHidden()
         }
     }
 
