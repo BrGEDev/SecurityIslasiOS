@@ -6,8 +6,51 @@
 	objectVersion = 90;
 	objects = {
 
+/* Begin PBXBuildFile section */
+		A28D5E7B3076F7F700BC8CF1 /* SecurityIslasWatch Watch App.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = A28D5E5D3076F7F500BC8CF1 /* SecurityIslasWatch Watch App.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+/* End PBXBuildFile section */
+
+/* Begin PBXContainerItemProxy section */
+		A28D5E6A3076F7F700BC8CF1 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 000000000000000000000000 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A28D5E5C3076F7F500BC8CF1;
+			remoteInfo = "SecurityIslasWatch Watch App";
+		};
+		A28D5E743076F7F700BC8CF1 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 000000000000000000000000 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A28D5E5C3076F7F500BC8CF1;
+			remoteInfo = "SecurityIslasWatch Watch App";
+		};
+		A28D5E793076F7F700BC8CF1 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 000000000000000000000000 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A28D5E5C3076F7F500BC8CF1;
+			remoteInfo = "SecurityIslasWatch Watch App";
+		};
+/* End PBXContainerItemProxy section */
+
+/* Begin PBXCopyFilesBuildPhase section */
+		A28D5E7F3076F7F700BC8CF1 /* Embed Watch Content */ = {
+			isa = PBXCopyFilesBuildPhase;
+			dstPath = "$(CONTENTS_FOLDER_PATH)/Watch";
+			dstSubfolder = Product;
+			files = (
+				A28D5E7B3076F7F700BC8CF1 /* SecurityIslasWatch Watch App.app in Embed Watch Content */,
+			);
+			name = "Embed Watch Content";
+		};
+/* End PBXCopyFilesBuildPhase section */
+
 /* Begin PBXFileReference section */
 		000000000000000000000120 /* SecurityIslas.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = SecurityIslas.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		A28D5E5D3076F7F500BC8CF1 /* SecurityIslasWatch Watch App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "SecurityIslasWatch Watch App.app"; sourceTree = BUILT_PRODUCTS_DIR; };
+		A28D5E693076F7F700BC8CF1 /* SecurityIslasWatch Watch AppTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "SecurityIslasWatch Watch AppTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		A28D5E733076F7F700BC8CF1 /* SecurityIslasWatch Watch AppUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "SecurityIslasWatch Watch AppUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
@@ -16,10 +59,40 @@
 			path = SecurityIslas;
 			sourceTree = "<group>";
 		};
+		A28D5E5E3076F7F500BC8CF1 /* SecurityIslasWatch Watch App */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = "SecurityIslasWatch Watch App";
+			sourceTree = "<group>";
+		};
+		A28D5E6C3076F7F700BC8CF1 /* SecurityIslasWatch Watch AppTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = "SecurityIslasWatch Watch AppTests";
+			sourceTree = "<group>";
+		};
+		A28D5E763076F7F700BC8CF1 /* SecurityIslasWatch Watch AppUITests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = "SecurityIslasWatch Watch AppUITests";
+			sourceTree = "<group>";
+		};
 /* End PBXFileSystemSynchronizedRootGroup section */
 
 /* Begin PBXFrameworksBuildPhase section */
 		000000000000000130000000 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			files = (
+			);
+		};
+		A28D5E5A3076F7F500BC8CF1 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			files = (
+			);
+		};
+		A28D5E663076F7F700BC8CF1 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			files = (
+			);
+		};
+		A28D5E703076F7F700BC8CF1 /* Frameworks */ = {
 			isa = PBXFrameworksBuildPhase;
 			files = (
 			);
@@ -31,6 +104,9 @@
 			isa = PBXGroup;
 			children = (
 				000000000000000000000010 /* SecurityIslas */,
+				A28D5E5E3076F7F500BC8CF1 /* SecurityIslasWatch Watch App */,
+				A28D5E6C3076F7F700BC8CF1 /* SecurityIslasWatch Watch AppTests */,
+				A28D5E763076F7F700BC8CF1 /* SecurityIslasWatch Watch AppUITests */,
 				000000000000000000000020 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -39,6 +115,9 @@
 			isa = PBXGroup;
 			children = (
 				000000000000000000000120 /* SecurityIslas.app */,
+				A28D5E5D3076F7F500BC8CF1 /* SecurityIslasWatch Watch App.app */,
+				A28D5E693076F7F700BC8CF1 /* SecurityIslasWatch Watch AppTests.xctest */,
+				A28D5E733076F7F700BC8CF1 /* SecurityIslasWatch Watch AppUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -53,8 +132,12 @@
 				000000000000000120000000 /* Sources */,
 				000000000000000130000000 /* Frameworks */,
 				000000000000000140000000 /* Resources */,
+				A28D5E7F3076F7F700BC8CF1 /* Embed Watch Content */,
 			);
 			buildRules = (
+			);
+			dependencies = (
+				A28D5E7A3076F7F700BC8CF1 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				000000000000000000000010 /* SecurityIslas */,
@@ -64,6 +147,66 @@
 			productReference = 000000000000000000000120 /* SecurityIslas.app */;
 			productType = "com.apple.product-type.application";
 		};
+		A28D5E5C3076F7F500BC8CF1 /* SecurityIslasWatch Watch App */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A28D5E7C3076F7F700BC8CF1 /* Build configuration list for PBXNativeTarget "SecurityIslasWatch Watch App" */;
+			buildPhases = (
+				A28D5E593076F7F500BC8CF1 /* Sources */,
+				A28D5E5A3076F7F500BC8CF1 /* Frameworks */,
+				A28D5E5B3076F7F500BC8CF1 /* Resources */,
+			);
+			buildRules = (
+			);
+			fileSystemSynchronizedGroups = (
+				A28D5E5E3076F7F500BC8CF1 /* SecurityIslasWatch Watch App */,
+			);
+			name = "SecurityIslasWatch Watch App";
+			productName = "SecurityIslasWatch Watch App";
+			productReference = A28D5E5D3076F7F500BC8CF1 /* SecurityIslasWatch Watch App.app */;
+			productType = "com.apple.product-type.application";
+		};
+		A28D5E683076F7F700BC8CF1 /* SecurityIslasWatch Watch AppTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A28D5E803076F7F700BC8CF1 /* Build configuration list for PBXNativeTarget "SecurityIslasWatch Watch AppTests" */;
+			buildPhases = (
+				A28D5E653076F7F700BC8CF1 /* Sources */,
+				A28D5E663076F7F700BC8CF1 /* Frameworks */,
+				A28D5E673076F7F700BC8CF1 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				A28D5E6B3076F7F700BC8CF1 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				A28D5E6C3076F7F700BC8CF1 /* SecurityIslasWatch Watch AppTests */,
+			);
+			name = "SecurityIslasWatch Watch AppTests";
+			productName = "SecurityIslasWatch Watch AppTests";
+			productReference = A28D5E693076F7F700BC8CF1 /* SecurityIslasWatch Watch AppTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		A28D5E723076F7F700BC8CF1 /* SecurityIslasWatch Watch AppUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A28D5E833076F7F700BC8CF1 /* Build configuration list for PBXNativeTarget "SecurityIslasWatch Watch AppUITests" */;
+			buildPhases = (
+				A28D5E6F3076F7F700BC8CF1 /* Sources */,
+				A28D5E703076F7F700BC8CF1 /* Frameworks */,
+				A28D5E713076F7F700BC8CF1 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				A28D5E753076F7F700BC8CF1 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				A28D5E763076F7F700BC8CF1 /* SecurityIslasWatch Watch AppUITests */,
+			);
+			name = "SecurityIslasWatch Watch AppUITests";
+			productName = "SecurityIslasWatch Watch AppUITests";
+			productReference = A28D5E733076F7F700BC8CF1 /* SecurityIslasWatch Watch AppUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -71,11 +214,22 @@
 			isa = PBXProject;
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
-				LastSwiftUpdateCheck = 2630;
+				LastSwiftUpdateCheck = 2700;
 				LastUpgradeCheck = 2700;
 				TargetAttributes = {
 					000000000000000100000000 = {
 						CreatedOnToolsVersion = 26.3;
+					};
+					A28D5E5C3076F7F500BC8CF1 = {
+						CreatedOnToolsVersion = 27.0;
+					};
+					A28D5E683076F7F700BC8CF1 = {
+						CreatedOnToolsVersion = 27.0;
+						TestTargetID = A28D5E5C3076F7F500BC8CF1;
+					};
+					A28D5E723076F7F700BC8CF1 = {
+						CreatedOnToolsVersion = 27.0;
+						TestTargetID = A28D5E5C3076F7F500BC8CF1;
 					};
 				};
 			};
@@ -94,12 +248,30 @@
 			projectRoot = "";
 			targets = (
 				000000000000000100000000 /* SecurityIslas */,
+				A28D5E5C3076F7F500BC8CF1 /* SecurityIslasWatch Watch App */,
+				A28D5E683076F7F700BC8CF1 /* SecurityIslasWatch Watch AppTests */,
+				A28D5E723076F7F700BC8CF1 /* SecurityIslasWatch Watch AppUITests */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
 		000000000000000140000000 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			files = (
+			);
+		};
+		A28D5E5B3076F7F500BC8CF1 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			files = (
+			);
+		};
+		A28D5E673076F7F700BC8CF1 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			files = (
+			);
+		};
+		A28D5E713076F7F700BC8CF1 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			files = (
 			);
@@ -112,7 +284,40 @@
 			files = (
 			);
 		};
+		A28D5E593076F7F500BC8CF1 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			files = (
+			);
+		};
+		A28D5E653076F7F700BC8CF1 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			files = (
+			);
+		};
+		A28D5E6F3076F7F700BC8CF1 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			files = (
+			);
+		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXTargetDependency section */
+		A28D5E6B3076F7F700BC8CF1 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = A28D5E5C3076F7F500BC8CF1 /* SecurityIslasWatch Watch App */;
+			targetProxy = A28D5E6A3076F7F700BC8CF1 /* PBXContainerItemProxy */;
+		};
+		A28D5E753076F7F700BC8CF1 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = A28D5E5C3076F7F500BC8CF1 /* SecurityIslasWatch Watch App */;
+			targetProxy = A28D5E743076F7F700BC8CF1 /* PBXContainerItemProxy */;
+		};
+		A28D5E7A3076F7F700BC8CF1 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = A28D5E5C3076F7F500BC8CF1 /* SecurityIslasWatch Watch App */;
+			targetProxy = A28D5E793076F7F700BC8CF1 /* PBXContainerItemProxy */;
+		};
+/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		000000000000000011000000 /* Debug configuration for PBXProject "SecurityIslasiOS" */ = {
@@ -339,6 +544,165 @@
 			};
 			name = Release;
 		};
+		A28D5E7D3076F7F700BC8CF1 /* Debug configuration for PBXNativeTarget "SecurityIslasWatch Watch App" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 9NTUW88L35;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = SecurityIslasWatch;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = app.security.islasgower;
+				INFOPLIST_KEY_WKRunsIndependentlyOfCompanionApp = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = app.security.islasgower.watchkitapp;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 4;
+			};
+			name = Debug;
+		};
+		A28D5E7E3076F7F700BC8CF1 /* Release configuration for PBXNativeTarget "SecurityIslasWatch Watch App" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 9NTUW88L35;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = SecurityIslasWatch;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				INFOPLIST_KEY_WKCompanionAppBundleIdentifier = app.security.islasgower;
+				INFOPLIST_KEY_WKRunsIndependentlyOfCompanionApp = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = app.security.islasgower.watchkitapp;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		A28D5E813076F7F700BC8CF1 /* Debug configuration for PBXNativeTarget "SecurityIslasWatch Watch AppTests" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 9NTUW88L35;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "app.security.islasgower.SecurityIslasWatch-Watch-AppTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/SecurityIslasWatch Watch App.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/SecurityIslasWatch Watch App";
+				WATCHOS_DEPLOYMENT_TARGET = 27.0;
+			};
+			name = Debug;
+		};
+		A28D5E823076F7F700BC8CF1 /* Release configuration for PBXNativeTarget "SecurityIslasWatch Watch AppTests" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 9NTUW88L35;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "app.security.islasgower.SecurityIslasWatch-Watch-AppTests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 5.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/SecurityIslasWatch Watch App.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/SecurityIslasWatch Watch App";
+				VALIDATE_PRODUCT = YES;
+				WATCHOS_DEPLOYMENT_TARGET = 27.0;
+			};
+			name = Release;
+		};
+		A28D5E843076F7F700BC8CF1 /* Debug configuration for PBXNativeTarget "SecurityIslasWatch Watch AppUITests" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 9NTUW88L35;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "app.security.islasgower.SecurityIslasWatch-Watch-AppUITests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				TEST_TARGET_NAME = "SecurityIslasWatch Watch App";
+				WATCHOS_DEPLOYMENT_TARGET = 10.0;
+			};
+			name = Debug;
+		};
+		A28D5E853076F7F700BC8CF1 /* Release configuration for PBXNativeTarget "SecurityIslasWatch Watch AppUITests" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 9NTUW88L35;
+				GENERATE_INFOPLIST_FILE = YES;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = "app.security.islasgower.SecurityIslasWatch-Watch-AppUITests";
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				TEST_TARGET_NAME = "SecurityIslasWatch Watch App";
+				VALIDATE_PRODUCT = YES;
+				WATCHOS_DEPLOYMENT_TARGET = 10.0;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -355,6 +719,30 @@
 			buildConfigurations = (
 				000000000000000111000000 /* Debug configuration for PBXNativeTarget "SecurityIslas" */,
 				000000000000000112000000 /* Release configuration for PBXNativeTarget "SecurityIslas" */,
+			);
+			defaultConfigurationName = Release;
+		};
+		A28D5E7C3076F7F700BC8CF1 /* Build configuration list for PBXNativeTarget "SecurityIslasWatch Watch App" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A28D5E7D3076F7F700BC8CF1 /* Debug configuration for PBXNativeTarget "SecurityIslasWatch Watch App" */,
+				A28D5E7E3076F7F700BC8CF1 /* Release configuration for PBXNativeTarget "SecurityIslasWatch Watch App" */,
+			);
+			defaultConfigurationName = Release;
+		};
+		A28D5E803076F7F700BC8CF1 /* Build configuration list for PBXNativeTarget "SecurityIslasWatch Watch AppTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A28D5E813076F7F700BC8CF1 /* Debug configuration for PBXNativeTarget "SecurityIslasWatch Watch AppTests" */,
+				A28D5E823076F7F700BC8CF1 /* Release configuration for PBXNativeTarget "SecurityIslasWatch Watch AppTests" */,
+			);
+			defaultConfigurationName = Release;
+		};
+		A28D5E833076F7F700BC8CF1 /* Build configuration list for PBXNativeTarget "SecurityIslasWatch Watch AppUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A28D5E843076F7F700BC8CF1 /* Debug configuration for PBXNativeTarget "SecurityIslasWatch Watch AppUITests" */,
+				A28D5E853076F7F700BC8CF1 /* Release configuration for PBXNativeTarget "SecurityIslasWatch Watch AppUITests" */,
 			);
 			defaultConfigurationName = Release;
 		};
