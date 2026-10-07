@@ -54,6 +54,7 @@ struct ListHeaderSection<Accessory: View>: View {
             .padding(.top)
         }
         .headerProminence(.increased)
+        .listRowInsets(EdgeInsets())
     }
 }
 
