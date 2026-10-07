@@ -36,6 +36,17 @@ nonisolated final class DeviceKeyManager: Sendable {
         self.keychain = keychain
     }
 
+    /// En el simulador `SecureEnclave.isAvailable` puede ser `true`, pero la
+    /// llave exige un código de desbloqueo que el simulador no tiene y falla
+    /// con "Error de autenticación". Ahí siempre se usa la llave de software.
+    static var usesSecureEnclave: Bool {
+        #if targetEnvironment(simulator)
+        false
+        #else
+        SecureEnclave.isAvailable
+        #endif
+    }
+
     var hasKey: Bool {
         keychain.data(for: keyTag) != nil
     }
@@ -48,7 +59,7 @@ nonisolated final class DeviceKeyManager: Sendable {
     func createKey(context: LAContext) throws -> Data {
         deleteKey()
 
-        if SecureEnclave.isAvailable {
+        if Self.usesSecureEnclave {
             var error: Unmanaged<CFError>?
             guard let access = SecAccessControlCreateWithFlags(
                 nil,
