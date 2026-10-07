@@ -18,6 +18,7 @@ struct FamilyView: View {
     let repository: HouseholdRepository
 
     @State private var members: [FamilyMember] = []
+    @State private var pendingMemberRemoval: FamilyMember?
     @State private var showInvite = false
     @State private var errorMessage: String?
 
@@ -34,9 +35,10 @@ struct FamilyView: View {
                     }
                     .swipeActions {
                         if profile.role == .holder, !member.isCurrentUser {
-                            Button("Quitar", role: .destructive) {
-                                Task { await remove(member) }
-                            }
+                            // Sin `role: .destructive`: ese rol quita la fila al
+                            // instante y choca con el borrado tras Face ID y red.
+                            Button("Quitar") { pendingMemberRemoval = member }
+                                .tint(.red)
                         }
                     }
                 }
@@ -70,6 +72,16 @@ struct FamilyView: View {
                 let member = try await repository.inviteFamily(request)
                 members.append(member)
             }
+        }
+        .confirmationDialog(
+            "¿Quitar a \(pendingMemberRemoval?.name ?? "")?",
+            isPresented: Binding(get: { pendingMemberRemoval != nil }, set: { if !$0 { pendingMemberRemoval = nil } }),
+            titleVisibility: .visible,
+            presenting: pendingMemberRemoval
+        ) { member in
+            Button("Quitar", role: .destructive) { Task { await remove(member) } }
+        } message: { _ in
+            Text("Perderá el acceso de inmediato en todos sus dispositivos.")
         }
         .errorAlert($errorMessage)
     }
@@ -184,7 +196,8 @@ struct DevicesView: View {
                     }
                     .swipeActions {
                         if !device.isCurrent {
-                            Button("Quitar", role: .destructive) { confirmRemoval = device }
+                            Button("Quitar") { confirmRemoval = device }
+                                .tint(.red)
                         }
                     }
                 }
@@ -251,6 +264,7 @@ struct EmergencyContactsView: View {
     @Environment(AppContainer.self) private var container
     @Environment(\.openURL) private var openURL
     @State private var contacts: [EmergencyContact] = []
+    @State private var pendingContactRemoval: EmergencyContact?
     @State private var showAdd = false
     @State private var errorMessage: String?
 
@@ -266,7 +280,8 @@ struct EmergencyContactsView: View {
                         }
                     }
                     .swipeActions {
-                        Button("Quitar", role: .destructive) { Task { await remove(contact) } }
+                        Button("Quitar") { pendingContactRemoval = contact }
+                            .tint(.red)
                     }
                 }
             } header: {
@@ -302,6 +317,16 @@ struct EmergencyContactsView: View {
             }
         }
         .readableContentWidth()
+        .confirmationDialog(
+            "¿Quitar a \(pendingContactRemoval?.name ?? "")?",
+            isPresented: Binding(get: { pendingContactRemoval != nil }, set: { if !$0 { pendingContactRemoval = nil } }),
+            titleVisibility: .visible,
+            presenting: pendingContactRemoval
+        ) { contact in
+            Button("Quitar", role: .destructive) { Task { await remove(contact) } }
+        } message: { _ in
+            Text("Ya no recibirá tus alertas de pánico.")
+        }
         .navigationTitle("Contactos")
         .navigationBarTitleDisplayMode(.inline)
         .task { await load() }

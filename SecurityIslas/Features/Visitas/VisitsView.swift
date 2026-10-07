@@ -180,11 +180,12 @@ struct VisitsView: View {
                     }
                     .swipeActions(edge: .trailing) {
                         if visit.status == .waiting {
-                            Button(role: .destructive) {
+                            Button {
                                 Task { await model.decide(visit, .reject) }
                             } label: {
                                 Label("Rechazar", systemImage: "xmark")
                             }
+                            .tint(.red)
                         } else if visit.status == .entered || visit.status == .authorized {
                             Button {
                                 Task { await model.markSleepover(visit) }
