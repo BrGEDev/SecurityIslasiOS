@@ -64,7 +64,7 @@ struct OwnerHomeView: View {
             .padding(.horizontal)
         }
         .readableContentWidth()
-        .background(Color(.systemGroupedBackground))
+        .background { DashboardBackground() }
         .navigationTitle("Hola, \(profile.firstName)")
         .navigationBarTitleDisplayMode(.large)
         .navigationSubtitleCompat(residenceLine)

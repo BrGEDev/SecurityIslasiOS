@@ -21,45 +21,19 @@ struct MyQRView: View {
 
     var body: some View {
         ScrollView {
-            VStack(spacing: 18) {
-                if let seed {
-                    TimelineView(.periodic(from: .now, by: 1)) { context in
-                        let payload = generator.payload(userId: profile.id, seed: seed, date: context.date)
-                        let remaining = TOTP.secondsRemaining(date: context.date, period: seed.period)
-                        VStack(spacing: 14) {
-                            QRImage(payload: payload)
-                            HStack(spacing: 6) {
-                                CountdownRing(progress: Double(remaining) / Double(seed.period))
-                                Text("Cambia en \(remaining) s")
-                                    .font(.footnote)
-                                    .foregroundStyle(.secondary)
-                                    .monospacedDigit()
-                            }
-                        }
-                    }
-                } else if let errorMessage {
-                    ContentUnavailableView("Sin código", systemImage: "qrcode", description: Text(errorMessage))
-                    AsyncButton("Reintentar") { await loadSeed() }
-                } else {
-                    ProgressView().frame(height: 280)
-                }
+            VStack(spacing: 20) {
+                pass
+                    .frame(maxWidth: 380)
 
-                VStack(spacing: 4) {
-                    Text(profile.fullName).font(.title3.bold())
-                    Text([profile.residence?.name, profile.residence?.fraccionamientoName].compactMap { $0 }.joined(separator: " · "))
-                        .font(.footnote)
-                        .foregroundStyle(.secondary)
-                    if profile.role == .nonResidentOwner {
-                        Text("Acceso de propietario · avisamos al arrendatario")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
+                VStack(spacing: 10) {
+                    infoRow("Muéstralo al guardia para entrar en taxi, a pie o en otro auto.", systemImage: "car.side")
+                    infoRow("Funciona sin internet: el código se genera en tu iPhone.", systemImage: "wifi.slash")
+                    infoRow("Subimos el brillo mientras esta pantalla está abierta.", systemImage: "sun.max")
                 }
-
-                FootnoteLabel(text: "Subimos el brillo al abrir esta pantalla.", systemImage: "sun.max")
-                    .frame(maxWidth: .infinity, alignment: .center)
+                .frame(maxWidth: 380)
             }
             .padding()
+            .frame(maxWidth: .infinity)
         }
         .background(Color(.systemGroupedBackground))
         .readableContentWidth()
@@ -67,6 +41,99 @@ struct MyQRView: View {
         .task { await loadSeed() }
         .onAppear(perform: raiseBrightness)
         .onDisappear(perform: restoreBrightness)
+    }
+
+    /// Pase con la anatomía de Wallet: cabecera de marca, código sobre blanco
+    /// (máximo contraste para el lector de la caseta) y vigencia del código.
+    private var pass: some View {
+        VStack(spacing: 0) {
+            HStack(alignment: .top) {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text((profile.residence?.fraccionamientoName ?? AppInfo.name).uppercased())
+                        .font(.caption.weight(.semibold))
+                        .opacity(0.8)
+                    Text(profile.role == .nonResidentOwner ? "Pase de propietario" : "Pase de residente")
+                        .font(.title3.bold())
+                }
+                Spacer()
+                Image(systemName: "checkmark.shield.fill")
+                    .font(.title2)
+                    .opacity(0.9)
+            }
+            .foregroundStyle(.white)
+            .padding(20)
+            .background(
+                LinearGradient(
+                    colors: [Color(red: 0.16, green: 0.55, blue: 1.0), Color(red: 0.0, green: 0.3, blue: 0.8)],
+                    startPoint: .topLeading,
+                    endPoint: .bottomTrailing
+                )
+            )
+
+            VStack(spacing: 16) {
+                Group {
+                    if let seed {
+                        TimelineView(.periodic(from: .now, by: 1)) { context in
+                            let payload = generator.payload(userId: profile.id, seed: seed, date: context.date)
+                            let remaining = TOTP.secondsRemaining(date: context.date, period: seed.period)
+                            VStack(spacing: 14) {
+                                QRImage(payload: payload)
+                                    .id(payload)
+                                    .transition(.opacity)
+                                HStack(spacing: 6) {
+                                    CountdownRing(progress: Double(remaining) / Double(seed.period))
+                                    Text("Se renueva en \(remaining) s")
+                                        .font(.footnote)
+                                        .foregroundStyle(.secondary)
+                                        .monospacedDigit()
+                                        .contentTransition(.numericText(countsDown: true))
+                                }
+                            }
+                            .animation(.easeInOut(duration: 0.3), value: payload)
+                        }
+                    } else if let errorMessage {
+                        ContentUnavailableView("Sin código", systemImage: "qrcode", description: Text(errorMessage))
+                        AsyncButton("Reintentar") { await loadSeed() }
+                            .buttonStyle(.islasSecondary)
+                    } else {
+                        ProgressView().frame(height: 260)
+                    }
+                }
+                .padding(.top, 20)
+
+                Divider()
+
+                HStack {
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("TITULAR").font(.caption2.weight(.semibold)).foregroundStyle(.secondary)
+                        Text(profile.fullName).font(.subheadline.weight(.semibold))
+                    }
+                    Spacer()
+                    VStack(alignment: .trailing, spacing: 2) {
+                        Text("VIVIENDA").font(.caption2.weight(.semibold)).foregroundStyle(.secondary)
+                        Text(profile.residence?.name ?? "—").font(.subheadline.weight(.semibold))
+                    }
+                }
+                .padding(.horizontal, 20)
+                .padding(.bottom, 18)
+            }
+            .background(Color(.secondarySystemGroupedBackground))
+        }
+        .clipShape(.rect(cornerRadius: 24, style: .continuous))
+        .shadow(color: .black.opacity(0.12), radius: 20, y: 10)
+        .accessibilityElement(children: .contain)
+    }
+
+    private func infoRow(_ text: String, systemImage: String) -> some View {
+        Label {
+            Text(text)
+                .font(.footnote)
+                .foregroundStyle(.secondary)
+        } icon: {
+            Image(systemName: systemImage)
+                .foregroundStyle(Color.accentColor)
+        }
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private func loadSeed() async {
@@ -108,10 +175,10 @@ private struct QRImage: View {
                 Image(systemName: "qrcode").resizable().scaledToFit()
             }
         }
-        .frame(width: 240, height: 240)
-        .padding(20)
-        .background(.white, in: .rect(cornerRadius: 24))
-        .shadow(color: .black.opacity(0.06), radius: 10, y: 4)
+        .frame(width: 220, height: 220)
+        .padding(14)
+        // Siempre blanco, también en modo oscuro: los lectores lo necesitan.
+        .background(.white, in: .rect(cornerRadius: 16, style: .continuous))
         .accessibilityLabel("Tu código QR de acceso")
     }
 }

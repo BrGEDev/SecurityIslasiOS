@@ -2,9 +2,15 @@
 //  HomeView.swift
 //  SecurityIslas
 //
-//  Pantalla 9 (Inicio): visita en caseta con Autorizar / Rechazar (RF-02),
-//  botón de la pluma según geocerca y carril (RF-23), accesos rápidos,
-//  lo de hoy y el pánico (mantener presionado 3 s, RF-40).
+//  Panel de Inicio (pantallas 9 y 10), ordenado por urgencia:
+//  1. Visita en caseta: tarjeta tipo Live Activity con Autorizar / Rechazar (RF-02).
+//  2. Pluma: tarjeta principal tipo Wallet según geocerca y carril (RF-23).
+//  3. Accesos rápidos: invitar, recurrentes, Mi QR, familia.
+//  4. Hoy: indicadores del día y actividad en línea de tiempo.
+//  5. Pánico: mantener presionado 3 s, siempre al alcance del pulgar (RF-40).
+//
+//  En la pantalla interior del iPhone Duo (regular × regular) los bloques 1–3
+//  y 4 van en dos columnas sin cruzar el pliegue.
 //
 
 import SwiftUI
@@ -28,45 +34,47 @@ struct HomeView: View {
 
     var body: some View {
         ScrollView {
-            VStack(alignment: .leading, spacing: 16) {
+            VStack(alignment: .leading, spacing: 24) {
                 if #available(iOS 26, *) {
                     // En iOS 26 la vivienda va como subtítulo de la barra de navegación.
                     EmptyView()
                 } else {
-                    Text(residenceLine)
+                    Label(residenceLine, systemImage: "house.fill")
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
+                        .padding(.horizontal, 4)
                 }
 
-                AdaptiveColumns {
+                AdaptiveColumns(spacing: 24) {
                     if let visit = model.pendingVisit {
-                        PendingVisitCard(
+                        LiveVisitCard(
                             visit: visit,
                             extraCount: model.extraPendingCount,
                             isResponding: model.respondingVisitId == visit.id
                         ) { decision in
                             await model.decide(visit, decision)
                         }
-                        .transition(.move(edge: .top).combined(with: .opacity))
+                        .transition(.asymmetric(
+                            insertion: .move(edge: .top).combined(with: .opacity),
+                            removal: .scale(scale: 0.9).combined(with: .opacity)
+                        ))
                     }
 
-                    GateButton(model: model.gate)
+                    GateHeroCard(model: model.gate)
 
-                    quickActions
-
-                    if let summary = model.summary, summary.packagesAtBooth > 0 {
-                        packagesBanner(count: summary.packagesAtBooth)
-                    }
+                    QuickActionsGrid(items: quickActions)
+                        .padding(.top, 4)
                 } trailing: {
                     todaySection
                 }
             }
             .padding(.horizontal)
-            .padding(.bottom, 24)
-            .animation(.snappy, value: model.pendingVisit?.id)
+            .padding(.top, 4)
+            .padding(.bottom, 32)
+            .animation(.smooth, value: model.pendingVisit?.id)
         }
         .readableContentWidth(1_000)
-        .background(Color(.systemGroupedBackground))
+        .background { DashboardBackground() }
         .navigationTitle("Hola, \(profile.firstName)")
         .navigationBarTitleDisplayMode(.large)
         .navigationSubtitleCompat(residenceLine)
@@ -89,7 +97,7 @@ struct HomeView: View {
             }
             .padding(.horizontal)
             .padding(.bottom, 8)
-            .readableContentWidth(560)
+            .readableContentWidth(520)
         }
         .task(id: container.dataVersion) {
             await model.load()
@@ -106,217 +114,92 @@ struct HomeView: View {
         return "\(residence.name) · \(residence.fraccionamientoName)"
     }
 
-    private func packagesBanner(count: Int) -> some View {
-        Button {
-            router.homePath.append(.packages)
-        } label: {
-            HStack(spacing: 12) {
-                IconTile(systemName: "shippingbox.fill", tint: .orange)
-                Text("\(count) \(count == 1 ? "paquete" : "paquetes") en caseta")
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(.primary)
-                Spacer()
-                Image(systemName: "chevron.forward")
-                    .font(.footnote.weight(.semibold))
-                    .foregroundStyle(.tertiary)
-            }
-            .padding(12)
-            .background(Color.orange.opacity(0.12), in: .rect(cornerRadius: 18, style: .continuous))
-        }
-        .buttonStyle(.plain)
-    }
-
-    private var quickActions: some View {
-        HStack(spacing: 10) {
-            QuickAction(icon: "person.badge.plus", title: "Invitar") { router.showNewInvitation = true }
-            QuickAction(icon: "arrow.triangle.2.circlepath", title: "Recurrentes") { router.open(.recurring) }
-            QuickAction(icon: "qrcode", title: "Mi QR") { router.selectedTab = .qr }
-            QuickAction(icon: "person.2", title: "Familia") { router.openAccount(.family) }
-        }
+    private var quickActions: [QuickActionItem] {
+        [
+            QuickActionItem(id: "invite", title: "Invitar", systemImage: "person.crop.circle.badge.plus", tint: .blue) {
+                router.showNewInvitation = true
+            },
+            QuickActionItem(id: "recurring", title: "Recurrentes", systemImage: "arrow.triangle.2.circlepath", tint: .teal) {
+                router.open(.recurring)
+            },
+            QuickActionItem(id: "qr", title: "Mi QR", systemImage: "qrcode", tint: .indigo) {
+                router.selectedTab = .qr
+            },
+            QuickActionItem(id: "family", title: "Familia", systemImage: "person.2.fill", tint: .orange) {
+                router.openAccount(.family)
+            },
+        ]
     }
 
     @ViewBuilder
     private var todaySection: some View {
-        HStack(alignment: .firstTextBaseline) {
-            Text("Hoy")
-                .font(.title3.bold())
-                .accessibilityAddTraits(.isHeader)
-            Spacer()
-            Button("Ver todo") { router.homePath.append(.history) }
-                .font(.subheadline)
-        }
-        .padding(.top, 4)
-
-        // Mientras carga se muestran filas de ejemplo con `.redacted`.
         let isLoading = model.summary == nil
         let today = isLoading ? Visit.placeholders : (model.summary?.today ?? [])
-        if !isLoading && today.isEmpty {
-            Text("Todavía no hay accesos hoy.")
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-                .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(16)
-                .cardBackground()
-        } else {
-            VStack(spacing: 0) {
-                ForEach(Array(today.enumerated()), id: \.element.id) { index, visit in
-                    VisitRow(visit: visit, compact: true)
-                        .padding(.horizontal, 14)
-                        .padding(.vertical, 10)
-                    if index < today.count - 1 {
-                        Divider().padding(.leading, 64)
-                    }
-                }
-            }
-            .cardBackground()
-            .redacted(reason: isLoading ? .placeholder : [])
+        let pending = model.summary?.pendingVisits.count ?? 0
+        let packages = model.summary?.packagesAtBooth ?? 0
+
+        DashboardSectionHeader(title: "Hoy", actionTitle: "Historial") {
+            router.homePath.append(.history)
         }
-    }
-}
 
-private struct QuickAction: View {
-    let icon: String
-    let title: String
-    let action: () -> Void
+        HStack(spacing: 12) {
+            SummaryTile(
+                value: "\(today.count)",
+                title: today.count == 1 ? "Acceso" : "Accesos",
+                systemImage: "figure.walk.arrival",
+                tint: .blue
+            ) {
+                router.homePath.append(.history)
+            }
+            SummaryTile(
+                value: "\(pending)",
+                title: "En caseta",
+                systemImage: "clock.badge.exclamationmark.fill",
+                tint: pending > 0 ? .orange : .gray
+            ) {
+                router.open(.today)
+            }
+            SummaryTile(
+                value: "\(packages)",
+                title: packages == 1 ? "Paquete" : "Paquetes",
+                systemImage: "shippingbox.fill",
+                tint: packages > 0 ? .brown : .gray
+            ) {
+                router.homePath.append(.packages)
+            }
+        }
+        .redacted(reason: isLoading ? .placeholder : [])
 
-    var body: some View {
-        Button(action: action) {
-            VStack(spacing: 6) {
-                Image(systemName: icon)
-                    .font(.title3)
-                    .foregroundStyle(Color.accentColor)
-                Text(title)
-                    .font(.caption2.weight(.medium))
-                    .foregroundStyle(.primary)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.8)
+        if !isLoading && today.isEmpty {
+            ContentUnavailableView {
+                Label("Sin accesos hoy", systemImage: "sun.max")
+            } description: {
+                Text("Aquí verás quién entra y quién respondió.")
             }
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 12)
-            .cardBackground()
-        }
-        .buttonStyle(.plain)
-    }
-}
-
-/// Tarjeta de la visita que espera en caseta.
-struct PendingVisitCard: View {
-    let visit: Visit
-    var extraCount = 0
-    var isResponding = false
-    let onDecision: (VisitDecision) async -> Void
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack {
-                KindBadge(kind: visit.kind)
-                Spacer()
-                if let arrivedAt = visit.arrivedAt {
-                    TimelineView(.periodic(from: .now, by: 1)) { context in
-                        Text("En caseta · hace \(Self.elapsed(from: arrivedAt, to: context.date))")
-                            .font(.caption.weight(.semibold))
-                            .foregroundStyle(.orange)
-                    }
-                }
-            }
-
-            HStack(spacing: 12) {
-                InitialsAvatar(initials: visit.initials)
-                VStack(alignment: .leading, spacing: 2) {
-                    Text(visit.name).font(.headline)
-                    Text(detail).font(.caption).foregroundStyle(.secondary)
-                }
-            }
-
-            HStack(spacing: 10) {
-                AsyncButton {
-                    await onDecision(.reject)
-                } label: {
-                    Text("Rechazar")
-                        .font(.body.weight(.semibold))
-                        .foregroundStyle(.red)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 12)
-                        .background(Color.red.opacity(0.14), in: Capsule())
-                }
-                AsyncButton {
-                    await onDecision(.authorize)
-                } label: {
-                    Text("Autorizar")
-                        .font(.body.weight(.semibold))
-                        .foregroundStyle(.white)
-                        .frame(maxWidth: .infinity)
-                        .padding(.vertical, 12)
-                        .background(Color.green, in: Capsule())
-                }
-            }
-            .buttonStyle(.plain)
-            .disabled(isResponding)
-
-            if extraCount > 0 {
-                Text("+\(extraCount) más esperando en caseta")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-        }
-        .padding(16)
-        .cardBackground(cornerRadius: 20)
-        .overlay(RoundedRectangle(cornerRadius: 20, style: .continuous).strokeBorder(Color.accentColor, lineWidth: 1.5))
-        .sensoryFeedback(.warning, trigger: visit.id)
-    }
-
-    private var detail: String {
-        var parts: [String] = []
-        if visit.kind == .service, let company = visit.company, company != visit.name {
-            parts.append(company)
-        }
-        parts.append(visit.origin == .walkIn ? "Sin invitación" : visit.subtitle)
-        if let plate = visit.plate { parts.append("placa \(plate)") }
-        return parts.joined(separator: " · ")
-    }
-
-    static func elapsed(from start: Date, to now: Date) -> String {
-        let seconds = max(0, Int(now.timeIntervalSince(start)))
-        return seconds < 60 ? "\(seconds) s" : "\(seconds / 60) min"
-    }
-}
-
-/// Fila de acceso usada en Inicio y en Visitas > Hoy.
-struct VisitRow: View {
-    let visit: Visit
-    var compact = false
-
-    var body: some View {
-        HStack(spacing: 12) {
-            if compact {
-                IconTile(systemName: visit.kind.symbol, tint: visit.kind.tint, size: 36)
-            } else {
-                InitialsAvatar(initials: visit.initials)
-            }
-            VStack(alignment: .leading, spacing: 2) {
-                Text(visit.name).font(.subheadline.weight(.semibold))
-                Text(compact ? compactDetail : visit.subtitle)
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-            }
-            Spacer(minLength: 8)
-            if !compact {
-                StatusChip(text: visit.statusText, tint: visit.statusTint)
-            }
-        }
-        .accessibilityElement(children: .combine)
-    }
-
-    private var compactDetail: String {
-        var parts = [visit.kind.title]
-        if let entered = visit.enteredAt {
-            parts.append("entró \(entered.shortTime)")
-        } else if visit.status == .scheduled, let scheduled = visit.scheduledAt {
-            parts.append("llega \(scheduled.shortTime)")
+            .padding(.vertical, 8)
+            .cardBackground(cornerRadius: 22)
         } else {
-            parts.append(visit.statusText.lowercased())
+            ActivityTimeline(visits: today)
+                .redacted(reason: isLoading ? .placeholder : [])
         }
-        return parts.joined(separator: " · ")
+    }
+}
+
+/// Fondo con un degradado de marca muy sutil en la parte superior que se
+/// funde con el fondo agrupado del sistema (claro y oscuro).
+struct DashboardBackground: View {
+    var body: some View {
+        ZStack(alignment: .top) {
+            Color(.systemGroupedBackground)
+            LinearGradient(
+                colors: [Color.accentColor.opacity(0.22), Color.accentColor.opacity(0)],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+            .frame(height: 360)
+        }
+        .ignoresSafeArea()
     }
 }
 
