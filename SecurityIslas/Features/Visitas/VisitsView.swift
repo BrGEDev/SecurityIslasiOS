@@ -138,10 +138,9 @@ struct VisitsView: View {
                 Task { await model.load(.recurring) }
             }
         }
-        .confirmationDialog(
+        .alert(
             pendingDecision.map { "\($0.name) está en caseta" } ?? "",
             isPresented: Binding(get: { pendingDecision != nil }, set: { if !$0 { pendingDecision = nil } }),
-            titleVisibility: .visible,
             presenting: pendingDecision
         ) { visit in
             Button("Autorizar") { Task { await model.decide(visit, .authorize) } }

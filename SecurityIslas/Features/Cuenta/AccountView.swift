@@ -98,10 +98,11 @@ struct AccountView: View {
         .readableContentWidth()
         .navigationTitle("Cuenta")
         .task(id: container.dataVersion) { await loadSummary() }
-        .confirmationDialog("¿Cerrar sesión en este iPhone?", isPresented: $confirmSignOut, titleVisibility: .visible) {
+        .alert("¿Cerrar sesión en este iPhone?", isPresented: $confirmSignOut) {
             Button("Cerrar sesión", role: .destructive) {
                 Task { await session.signOut() }
             }
+            Button("Cancelar", role: .cancel) {}
         } message: {
             Text("Este iPhone dejará de abrir la pluma y de recibir avisos hasta que vuelvas a verificar tu número.")
         }

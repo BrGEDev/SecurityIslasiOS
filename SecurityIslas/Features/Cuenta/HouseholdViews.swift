@@ -73,13 +73,13 @@ struct FamilyView: View {
                 members.append(member)
             }
         }
-        .confirmationDialog(
+        .alert(
             "¿Quitar a \(pendingMemberRemoval?.name ?? "")?",
             isPresented: Binding(get: { pendingMemberRemoval != nil }, set: { if !$0 { pendingMemberRemoval = nil } }),
-            titleVisibility: .visible,
             presenting: pendingMemberRemoval
         ) { member in
             Button("Quitar", role: .destructive) { Task { await remove(member) } }
+            Button("Cancelar", role: .cancel) {}
         } message: { _ in
             Text("Perderá el acceso de inmediato en todos sus dispositivos.")
         }
@@ -221,13 +221,13 @@ struct DevicesView: View {
         .navigationBarTitleDisplayMode(.inline)
         .task { await load() }
         .refreshable { await load() }
-        .confirmationDialog(
+        .alert(
             "¿Quitar \(confirmRemoval?.name ?? "este dispositivo")?",
             isPresented: Binding(get: { confirmRemoval != nil }, set: { if !$0 { confirmRemoval = nil } }),
-            titleVisibility: .visible,
             presenting: confirmRemoval
         ) { device in
             Button("Quitar", role: .destructive) { Task { await remove(device) } }
+            Button("Cancelar", role: .cancel) {}
         } message: { _ in
             Text("Dejará de abrir la pluma y de recibir avisos al instante.")
         }
@@ -317,13 +317,13 @@ struct EmergencyContactsView: View {
             }
         }
         .readableContentWidth()
-        .confirmationDialog(
+        .alert(
             "¿Quitar a \(pendingContactRemoval?.name ?? "")?",
             isPresented: Binding(get: { pendingContactRemoval != nil }, set: { if !$0 { pendingContactRemoval = nil } }),
-            titleVisibility: .visible,
             presenting: pendingContactRemoval
         ) { contact in
             Button("Quitar", role: .destructive) { Task { await remove(contact) } }
+            Button("Cancelar", role: .cancel) {}
         } message: { _ in
             Text("Ya no recibirá tus alertas de pánico.")
         }

@@ -218,8 +218,9 @@ struct RecurringDetailView: View {
                 recurring = fresh
             }
         }
-        .confirmationDialog("¿Revocar el código de \(recurring.name)?", isPresented: $confirmRevoke, titleVisibility: .visible) {
+        .alert("¿Revocar el código de \(recurring.name)?", isPresented: $confirmRevoke) {
             Button("Revocar", role: .destructive) { Task { await revoke() } }
+            Button("Cancelar", role: .cancel) {}
         } message: {
             Text("Aplica de inmediato en las casetas con conexión.")
         }
