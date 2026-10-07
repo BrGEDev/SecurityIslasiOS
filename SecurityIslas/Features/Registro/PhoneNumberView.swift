@@ -45,8 +45,8 @@ struct PhoneNumberView: View {
                             .keyboardType(.numberPad)
                             .textContentType(.telephoneNumber)
                             .font(.title3)
-                        .focused($focused)
-                        .textFieldStyle(FieldStyle())
+                            .focused($focused)
+                            .textFieldStyle(FieldStyle())
                     }
 
                     InlineError(message: model.errorMessage)
