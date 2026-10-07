@@ -260,6 +260,9 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "Islas Security";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
+				INFOPLIST_KEY_NSFaceIDUsageDescription = "Usamos Face ID para proteger la llave de tu iPhone: abrir la pluma, recurrentes y cambios en tu cuenta.";
+				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "Si activas el pánico, compartimos tu ubicación en vivo con la caseta o tus contactos aunque la app esté cerrada.";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Se usa para abrir la pluma cerca de la entrada.";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
@@ -303,6 +306,9 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_KEY_CFBundleDisplayName = "Islas Security";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
+				INFOPLIST_KEY_NSFaceIDUsageDescription = "Usamos Face ID para proteger la llave de tu iPhone: abrir la pluma, recurrentes y cambios en tu cuenta.";
+				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "Si activas el pánico, compartimos tu ubicación en vivo con la caseta o tus contactos aunque la app esté cerrada.";
+				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Se usa para abrir la pluma cerca de la entrada.";
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
