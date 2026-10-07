@@ -188,7 +188,7 @@ struct RecurringDetailView: View {
                 LabeledContent("Código", value: recurring.codeType == .dynamicQR ? "QR dinámico" : "PIN · \(recurring.pinUsesPerDay ?? 1) usos/día")
             }
 
-            Section("Últimas entradas") {
+            Section {
                 if recurring.recentEntries.isEmpty {
                     Text("Todavía no hay entradas.").foregroundStyle(.secondary)
                 }
@@ -200,6 +200,8 @@ struct RecurringDetailView: View {
                         Text(entry.enteredAt.formatted(.dateTime.weekday(.wide).day().month(.abbreviated).locale(.app)).sentenceCased)
                     }
                 }
+            } header: {
+                Text("Últimas entradas")
             } footer: {
                 Text("Cada vez que entra te avisamos.")
             }
