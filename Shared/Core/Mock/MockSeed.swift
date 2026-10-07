@@ -82,6 +82,8 @@ nonisolated enum MockSeed {
                 devices: [
                     MockDevice(id: "dev-iphone12", name: "iPhone 12 de Brandon", model: .iphone, lastUsedAt: now.addingTimeInterval(-90 * 86_400)),
                     MockDevice(id: "dev-ipad", name: "iPad de Brandon", model: .ipad, lastUsedAt: now.addingTimeInterval(-86_400)),
+                    MockDevice(id: "dev-iphone15", name: "iPhone 15 de Brandon", model: .iphone, lastUsedAt: now.addingTimeInterval(-7 * 86_400)),
+                    // Los relojes no cuentan en el límite: esta cuenta sigue con 3 de 3.
                     MockDevice(id: "dev-watch", name: "Apple Watch", model: .watch, lastUsedAt: now.addingTimeInterval(-1_800)),
                 ]
             ),

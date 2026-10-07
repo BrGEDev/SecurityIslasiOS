@@ -2,39 +2,128 @@
 //  WatchGateButton.swift
 //  SecurityIslasWatch Watch App
 //
-//  Abrir pluma desde el reloj (RF-23, RF-68): mismas reglas que el iPhone.
-//  Carril exclusivo → "Abrir pluma"; compartido → "Solicitar paso"; fuera de
-//  la geocerca no se puede. No pide Face ID: basta con el reloj puesto y
-//  desbloqueado, y la orden va firmada con la llave del reloj.
+//  Página "Pluma" del reloj (RF-23, RF-68). Mismas reglas, textos, símbolos y
+//  colores que la tarjeta del iPhone: residentes → "Abrir pluma" (azul);
+//  carril compartido → "Solicitar paso" (índigo); abierta → verde. No pide
+//  Face ID: basta con el reloj puesto y desbloqueado, y la orden va firmada
+//  con la llave del reloj.
 //
 
 import SwiftUI
 import WatchKit
 
-struct WatchGateButton: View {
+struct WatchGateStyle {
+    let title: String
+    let subtitle: String
+    let symbol: String
+    let colors: [Color]
+    let isActionable: Bool
+    let showsProgress: Bool
+
+    static let neutral = [Color.gray, Color(white: 0.35)]
+
+    init(state: GateButtonState) {
+        switch state {
+        case .locating:
+            self.init("Buscando tu ubicación", "Para saber qué carril te toca", "location", Self.neutral, progress: true)
+        case .locationOff:
+            self.init("Activa la ubicación", "En Ajustes del reloj", "location.slash", Self.neutral)
+        case .ready(let lane, let distance) where lane.type == .residentsOnly:
+            self.init("Abrir pluma", "\(Self.format(distance)) · residentes", "lock.open.fill", BrandPalette.blue, actionable: true)
+        case .ready(_, let distance):
+            self.init("Solicitar paso", "\(Self.format(distance)) · carril compartido", "bell.fill", BrandPalette.indigo, actionable: true)
+        case .far(let distance):
+            self.init("Lejos de la entrada", "A \(Self.format(distance))", "location", Self.neutral)
+        case .working(let lane):
+            let residents = lane.type == .residentsOnly
+            self.init(residents ? "Abriendo…" : "Enviando…", lane.name, "ellipsis",
+                      residents ? BrandPalette.blue : BrandPalette.indigo, progress: true)
+        case .opened(let result):
+            self.init("Pluma abierta", "\(result.laneName) · \(result.at.shortTime)", "checkmark", BrandPalette.green)
+        case .passRequested:
+            self.init("Solicitud enviada", "El guardia confirma y abre", "bell.badge.fill", BrandPalette.indigo)
+        case .failed(let message):
+            self.init("No se pudo abrir", message, "exclamationmark.triangle.fill", BrandPalette.orange)
+        }
+    }
+
+    private init(
+        _ title: String,
+        _ subtitle: String,
+        _ symbol: String,
+        _ colors: [Color],
+        actionable: Bool = false,
+        progress: Bool = false
+    ) {
+        self.title = title
+        self.subtitle = subtitle
+        self.symbol = symbol
+        self.colors = colors
+        self.isActionable = actionable
+        self.showsProgress = progress
+    }
+
+    static func format(_ meters: Int) -> String {
+        meters >= 1000 ? String(format: "%.1f km", Double(meters) / 1000) : "\(meters) m"
+    }
+}
+
+struct WatchGatePage: View {
     let model: GateViewModel
 
+    @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @State private var pulse = false
+
     var body: some View {
-        Button {
-            Task { await model.trigger() }
-        } label: {
-            HStack(spacing: 10) {
-                icon
-                    .font(.title3)
-                    .frame(width: 28)
-                VStack(alignment: .leading, spacing: 1) {
-                    Text(title)
-                        .font(.headline)
-                        .lineLimit(2)
-                    Text(subtitle)
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
-                        .lineLimit(2)
+        let style = WatchGateStyle(state: model.state)
+        VStack(spacing: 8) {
+            Spacer(minLength: 0)
+            Button {
+                Task { await model.trigger() }
+            } label: {
+                ZStack {
+                    if style.isActionable && !reduceMotion {
+                        Circle()
+                            .stroke(style.colors[0].opacity(0.5), lineWidth: 3)
+                            .scaleEffect(pulse ? 1.18 : 1)
+                            .opacity(pulse ? 0 : 1)
+                    }
+                    Circle()
+                        .fill(BrandPalette.gradient(style.colors))
+                        .shadow(color: style.colors[1].opacity(0.55), radius: 10, y: 4)
+                    if style.showsProgress {
+                        ProgressView().tint(.white)
+                    } else {
+                        Image(systemName: style.symbol)
+                            .font(.system(size: 36, weight: .semibold))
+                            .foregroundStyle(.white)
+                            .contentTransition(.symbolEffect(.replace))
+                    }
                 }
+                .frame(width: 96, height: 96)
             }
+            .buttonStyle(.plain)
+            .disabled(!style.isActionable)
+            .accessibilityLabel(style.title)
+            .accessibilityHint(style.subtitle)
+
+            VStack(spacing: 2) {
+                Text(style.title)
+                    .font(.headline)
+                    .contentTransition(.opacity)
+                Text(style.subtitle)
+                    .font(.caption2)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(2)
+                    .multilineTextAlignment(.center)
+            }
+            Spacer(minLength: 0)
         }
-        .disabled(!isEnabled)
-        .listItemTint(tint)
+        .frame(maxWidth: .infinity)
+        .animation(.smooth, value: model.state)
+        .onAppear {
+            withAnimation(.easeOut(duration: 1.6).repeatForever(autoreverses: false)) { pulse = true }
+        }
         .onChange(of: model.state) { _, state in
             switch state {
             case .opened, .passRequested: WKInterfaceDevice.current().play(.success)
@@ -44,67 +133,6 @@ struct WatchGateButton: View {
         }
         .task {
             await model.refreshPosition()
-        }
-    }
-
-    private var isEnabled: Bool {
-        if case .ready = model.state { return true }
-        return false
-    }
-
-    @ViewBuilder
-    private var icon: some View {
-        switch model.state {
-        case .working:
-            ProgressView()
-        case .opened:
-            Image(systemName: "checkmark.circle.fill").foregroundStyle(.green)
-        case .passRequested:
-            Image(systemName: "person.badge.clock.fill").foregroundStyle(.orange)
-        case .failed:
-            Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(.yellow)
-        case .far, .locationOff:
-            Image(systemName: "location.slash").foregroundStyle(.secondary)
-        case .locating:
-            Image(systemName: "location").foregroundStyle(.secondary)
-        case .ready(let lane, _):
-            Image(systemName: lane.type == .residentsOnly ? "door.garage.open" : "hand.raised.fill")
-                .foregroundStyle(.tint)
-        }
-    }
-
-    private var title: String {
-        switch model.state {
-        case .locating: "Buscando tu ubicación"
-        case .ready(let lane, _): lane.type == .residentsOnly ? "Abrir pluma" : "Solicitar paso"
-        case .far: "Lejos de la entrada"
-        case .locationOff: "Activa la ubicación"
-        case .working(let lane): lane.type == .residentsOnly ? "Abriendo…" : "Enviando…"
-        case .opened: "Pluma abierta"
-        case .passRequested: "Solicitud enviada"
-        case .failed: "No se pudo abrir"
-        }
-    }
-
-    private var subtitle: String {
-        switch model.state {
-        case .locating: "Un momento"
-        case .ready(let lane, let distance): "\(distance) m · \(lane.type == .residentsOnly ? "residentes" : "carril compartido")"
-        case .far(let distance): distance >= 1000 ? String(format: "A %.1f km", Double(distance) / 1000) : "A \(distance) m"
-        case .locationOff: "En la app Ajustes del reloj"
-        case .working(let lane): lane.name
-        case .opened(let result): result.laneName
-        case .passRequested: "El guardia confirma y abre"
-        case .failed(let message): message
-        }
-    }
-
-    private var tint: Color {
-        switch model.state {
-        case .ready, .working: .accentColor
-        case .opened: .green
-        case .passRequested: .orange
-        default: .gray
         }
     }
 }

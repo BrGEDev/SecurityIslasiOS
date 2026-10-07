@@ -113,7 +113,7 @@ Cuentas y llaves se guardan en `UserDefaults`; visitas, paquetes, etc. se reinic
 | Número | Caso |
 |---|---|
 | 222 123 4567 · 221 848 6093 | Brandon, cuenta existente (3a), 1 dispositivo |
-| 222 999 9999 | Cuenta existente con 3 dispositivos (3b) |
+| 222 999 9999 | Cuenta existente con 3 dispositivos (3b) + un Apple Watch, que no cuenta |
 | 222 555 0000 | Precargado por la administración (RF-63) → pantalla 5 → aprobado |
 | 551 234 5678 | Laura, propietaria no residente con casa rentada (pantalla 38) |
 | Cualquier otro | Residente nuevo → 4 → 5 → 6; se aprueba solo a los ~12 s |
@@ -162,8 +162,16 @@ Para usar el backend real: lanzar con el argumento `-useLiveAPI YES` y ajustar `
      `{ code, device, publicKey, attestation, hardwareBacked }` → tokens + perfil.
   4. Desde ahí el reloj usa su propia sesión (refresh con el mismo `AuthInterceptor`) y funciona
      sin el iPhone cerca.
-- **(supuesto)** Un reloj nuevo reemplaza al anterior y el reloj **sí cuenta** dentro de los
-  3 dispositivos, como en la maqueta (decisión abierta, sección 9).
+- **Decidido (Brandon):** los Apple Watch **no cuentan** dentro del límite de 3 dispositivos y se
+  pueden vincular varios. El límite (RF-66) es de teléfonos y tabletas (`DeviceModel.countsTowardLimit`).
+- **Experiencia de vínculo** (como configurar el reloj en el iPhone): hoja con pasos —
+  presentación, instalar la app si falta (abre la app Watch), Face ID, "Vinculando…" con la animación
+  `PairingOrb` y un **código de 4 dígitos** que muestran el iPhone y el reloj (derivado del código de
+  un solo uso) para confirmar a simple vista que es el mismo reloj, y "Listo".
+- **Diseño del reloj:** lenguaje de watchOS 10 — páginas verticales con la Digital Crown (En caseta
+  solo si hay visitas, Pluma, Mi QR), fondos con el color de cada estado (`BrandPalette`, los mismos
+  degradados de la tarjeta de pluma del iPhone), Cuenta y Pánico en la barra superior, y Autorizar /
+  Rechazar como botones de llamada.
 - **Sin Face ID en el reloj (RF-68).** La llave del reloj se crea con `[.privateKeyUsage]` y
   `kSecAttrAccessibleWhenPasscodeSetThisDeviceOnly`: solo firma con el reloj desbloqueado, y el
   reloj se bloquea al quitárselo. `BiometricAuthenticator` no pide nada en watchOS.

@@ -16,7 +16,10 @@ import WatchKit
 final class WatchContainer {
     nonisolated enum LinkState: Equatable {
         case idle
-        case linking
+        /// `verification`: el mismo código que muestra el iPhone.
+        case linking(verification: String)
+        /// Pantalla de "listo" antes de entrar a Inicio.
+        case succeeded(verification: String)
         case failed(String)
     }
 
@@ -144,8 +147,9 @@ final class WatchContainer {
     /// Crea la llave del reloj y canjea el código del iPhone por una sesión
     /// propia. A partir de aquí el reloj ya no necesita al iPhone.
     private func completeLink(code: String, mockAccount: Data?) async {
-        guard linkState != .linking else { return }
-        linkState = .linking
+        if case .linking = linkState { return }
+        let verification = WatchVerificationCode.from(linkCode: code)
+        linkState = .linking(verification: verification)
         if let mockAccount {
             await mockServer?.importAccount(mockAccount)
         }
@@ -158,7 +162,8 @@ final class WatchContainer {
             )
             session.didAuthenticate(profile, returningUser: true)
             session.completeSetup()
-            linkState = .idle
+            linkState = .succeeded(verification: verification)
+            WKInterfaceDevice.current().play(.success)
             await notifications.requestAuthorization()
             link.send(.linked(LinkedWatch(
                 userId: profile.id,
@@ -170,6 +175,11 @@ final class WatchContainer {
             keys.deleteKey()
             linkState = .failed(error.userMessage ?? "No se pudo vincular. Inténtalo de nuevo desde tu iPhone.")
         }
+    }
+
+    /// Cierra la pantalla de "listo" y entra a Inicio.
+    func finishLinking() {
+        linkState = .idle
     }
 
     // MARK: - Simulación (solo mock)

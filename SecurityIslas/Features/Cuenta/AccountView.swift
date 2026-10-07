@@ -132,7 +132,7 @@ struct AccountView: View {
             summary.contacts = "\(contacts.count)"
         }
         if let list = try? await container.devices.devices() {
-            summary.devices = "\(list.devices.count) de \(list.maxDevices)"
+            summary.devices = "\(list.limitedCount) de \(list.maxDevices)"
         }
         if profile.canManageHousehold {
             if let guests = try? await container.household.guests() {

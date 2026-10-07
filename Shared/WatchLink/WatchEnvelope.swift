@@ -11,10 +11,11 @@
 //  (cada app tiene su propio MockServer y hay que pasarle los datos).
 //
 
+import CryptoKit
 import Foundation
 
 /// Datos del reloj ya vinculado (solo mock: el backend real ya los tiene).
-nonisolated struct LinkedWatch: Codable, Sendable {
+nonisolated struct LinkedWatch: Codable, Sendable, Equatable {
     let userId: String
     let deviceId: String
     let name: String
@@ -43,6 +44,16 @@ nonisolated enum WatchEnvelope: Codable, Sendable {
             return nil
         }
         self = envelope
+    }
+}
+
+/// Código corto que muestran el iPhone y el reloj al vincular, para confirmar
+/// a simple vista que es el mismo reloj (como en la configuración del Watch).
+nonisolated enum WatchVerificationCode {
+    static func from(linkCode: String) -> String {
+        let digest = SHA256.hash(data: Data(linkCode.utf8))
+        let number = digest.prefix(4).reduce(UInt32(0)) { $0 << 8 | UInt32($1) }
+        return String(format: "%04u", number % 10_000)
     }
 }
 

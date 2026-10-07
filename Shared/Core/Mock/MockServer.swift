@@ -509,7 +509,7 @@ actor MockServer {
         }
 
         var devices = persistent.accounts[index].devices.filter { $0.id != deviceId }
-        guard devices.count < 3 else {
+        guard devices.filter(\.model.countsTowardLimit).count < 3 else {
             throw MockFailure(409, "DEVICE_LIMIT", "Ya tienes 3 dispositivos. Quita uno para continuar.")
         }
         devices.append(MockDevice(id: deviceId, name: body.name, model: body.model, lastUsedAt: .now, publicKey: body.publicKey))
@@ -524,10 +524,7 @@ actor MockServer {
     private func createWatchLink(_ r: MockRequest) throws -> (Int, Data) {
         let account = try requireResident(r, restrictOwner: false)
         try verifySignature(r)
-        let watches = account.devices.filter { $0.model == .watch && $0.publicKey != nil }
-        guard account.devices.count - watches.count < 3 else {
-            throw MockFailure(409, "DEVICE_LIMIT", "Ya tienes 3 dispositivos. Quita uno para vincular tu Apple Watch.")
-        }
+        // Los relojes no cuentan en el límite de 3 dispositivos (RF-66).
         let expiresAt = Date.now.addingTimeInterval(300)
         let code = "mock-link.\(account.profile.id).\(Int(expiresAt.timeIntervalSince1970))"
         return try ok(WatchLinkTicket(code: code, expiresAt: expiresAt), status: 201)
@@ -545,11 +542,8 @@ actor MockServer {
               (try? P256.Signing.PublicKey(x963Representation: keyData)) != nil else {
             throw MockFailure(422, "INVALID_KEY", "La llave del reloj no es válida.")
         }
-        // Un reloj nuevo reemplaza al anterior (solo se usa uno por cuenta).
-        var devices = persistent.accounts[index].devices.filter { $0.id != body.device.id && $0.model != .watch }
-        guard devices.count < 3 else {
-            throw MockFailure(409, "DEVICE_LIMIT", "Ya tienes 3 dispositivos. Quita uno para vincular tu Apple Watch.")
-        }
+        // Se pueden tener varios relojes y no ocupan lugar en el límite (RF-66).
+        var devices = persistent.accounts[index].devices.filter { $0.id != body.device.id }
         devices.append(MockDevice(
             id: body.device.id,
             name: body.device.name,
@@ -588,7 +582,7 @@ actor MockServer {
     /// El reloj ya se vinculó: el iPhone lo muestra en Dispositivos.
     func importLinkedWatch(_ watch: LinkedWatch) {
         guard let index = persistent.accounts.firstIndex(where: { $0.profile.id == watch.userId }) else { return }
-        var devices = persistent.accounts[index].devices.filter { $0.id != watch.deviceId && $0.model != .watch }
+        var devices = persistent.accounts[index].devices.filter { $0.id != watch.deviceId }
         devices.append(MockDevice(id: watch.deviceId, name: watch.name, model: .watch, lastUsedAt: .now, publicKey: watch.publicKey))
         persistent.accounts[index].devices = devices
         save()

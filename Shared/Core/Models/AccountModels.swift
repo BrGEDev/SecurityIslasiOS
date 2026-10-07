@@ -175,7 +175,10 @@ nonisolated struct VerificationResult: Codable, Sendable {
     let maxDevices: Int
     let preload: PreloadedRegistration?
 
-    var reachedDeviceLimit: Bool { devices.count >= maxDevices }
+    /// Teléfonos y tabletas registrados: los relojes no cuentan en el límite.
+    var limitedDevices: [Device] { devices.filter(\.model.countsTowardLimit) }
+
+    var reachedDeviceLimit: Bool { limitedDevices.count >= maxDevices }
 }
 
 // MARK: - Dispositivos
@@ -185,6 +188,10 @@ nonisolated enum DeviceModel: String, Codable, Sendable {
     case ipad
     case watch
     case android
+
+    /// Hasta 3 teléfonos o tabletas por cuenta (RF-66). Los Apple Watch no
+    /// cuentan: se puede tener más de uno sin ocupar lugar.
+    var countsTowardLimit: Bool { self != .watch }
 
     var symbol: String {
         switch self {
@@ -206,4 +213,8 @@ nonisolated struct Device: Codable, Sendable, Hashable, Identifiable {
 nonisolated struct DeviceList: Codable, Sendable {
     let devices: [Device]
     let maxDevices: Int
+
+    /// Los relojes no ocupan lugar en el límite.
+    var limitedCount: Int { devices.filter(\.model.countsTowardLimit).count }
+    var freeSlots: Int { max(0, maxDevices - limitedCount) }
 }

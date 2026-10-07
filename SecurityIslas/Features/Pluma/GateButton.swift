@@ -150,10 +150,10 @@ private struct Appearance {
 
     var shadow: Color { isNeutral ? .black.opacity(0.04) : accent.opacity(0.35) }
 
-    static let blue = [Color(red: 0.16, green: 0.55, blue: 1.0), Color(red: 0.0, green: 0.33, blue: 0.86)]
-    static let indigo = [Color(red: 0.45, green: 0.38, blue: 0.98), Color(red: 0.27, green: 0.2, blue: 0.78)]
-    static let green = [Color(red: 0.2, green: 0.78, blue: 0.45), Color(red: 0.05, green: 0.6, blue: 0.35)]
-    static let orange = [Color(red: 1.0, green: 0.62, blue: 0.2), Color(red: 0.92, green: 0.42, blue: 0.1)]
+    static let blue = BrandPalette.blue
+    static let indigo = BrandPalette.indigo
+    static let green = BrandPalette.green
+    static let orange = BrandPalette.orange
 
     init(state: GateButtonState) {
         switch state {

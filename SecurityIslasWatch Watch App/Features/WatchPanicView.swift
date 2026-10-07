@@ -43,6 +43,7 @@ struct WatchPanicView: View {
             }
         }
         .navigationTitle("Pánico")
+        .containerBackground(BrandPalette.backdrop(BrandPalette.red, intensity: 0.75), for: .navigation)
         .task { await model.prepare() }
         .onChange(of: model.didFinish) { _, finished in
             if finished { dismiss() }
@@ -75,13 +76,14 @@ private struct WatchPanicHoldView: View {
         ScrollView {
             VStack(spacing: 8) {
                 ZStack {
-                    Circle().stroke(.red.opacity(0.3), lineWidth: 6)
+                    Circle().stroke(.white.opacity(0.25), lineWidth: 6)
                     Circle()
                         .trim(from: 0, to: progress)
-                        .stroke(.red, style: StrokeStyle(lineWidth: 6, lineCap: .round))
+                        .stroke(.white, style: StrokeStyle(lineWidth: 6, lineCap: .round))
                         .rotationEffect(.degrees(-90))
                     Circle()
-                        .fill(.red.gradient)
+                        .fill(BrandPalette.gradient(BrandPalette.red))
+                        .shadow(color: BrandPalette.red[1].opacity(0.6), radius: 8, y: 3)
                         .padding(10)
                     Image(systemName: "sos")
                         .font(.title2.weight(.heavy))
@@ -153,7 +155,7 @@ private struct WatchPanicCountdownView: View {
     var body: some View {
         VStack(spacing: 8) {
             ZStack {
-                Circle().stroke(.red, lineWidth: 4)
+                Circle().stroke(.white.opacity(0.9), lineWidth: 4)
                 if let remaining {
                     Text("\(remaining)")
                         .font(.system(size: 44, weight: .bold, design: .rounded))

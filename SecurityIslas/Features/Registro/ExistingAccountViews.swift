@@ -21,7 +21,7 @@ struct ExistingAccountView: View {
 
     private func content(_ verification: VerificationResult) -> some View {
         let profile = verification.profile
-        let deviceNumber = min(verification.devices.count + 1, verification.maxDevices)
+        let deviceNumber = min(verification.limitedDevices.count + 1, verification.maxDevices)
 
         return ScrollView {
             VStack(spacing: 20) {
@@ -94,11 +94,11 @@ struct DeviceLimitView: View {
         List {
             ListHeaderSection(
                 title: "Ya tienes 3 dispositivos",
-                subtitle: "Para usar este iPhone, quita uno. Dejará de abrir la pluma y de recibir avisos."
+                subtitle: "Para usar este iPhone, quita uno. Dejará de abrir la pluma y de recibir avisos. Tus Apple Watch no cuentan."
             )
 
             Section {
-                ForEach(model.verification?.devices ?? []) { device in
+                ForEach(model.verification?.limitedDevices ?? []) { device in
                     Button {
                         model.deviceToRemove = device
                     } label: {

@@ -144,9 +144,12 @@ Marca cada punto al terminarlo y mueve los supuestos a `DECISIONES.md`.
 - [ ] iPhone Duo con Xcode 27.1: `GeometryProxy.reservedRegions(kind: .division)` y
       `onHingeChange` para colocar las columnas según el pliegue real.
 
+## Decisiones ya tomadas
+
+- Los Apple Watch **no cuentan** en el límite de 3 dispositivos y se pueden tener varios.
+
 ## Decisiones abiertas (preguntar, no decidir)
 
-- Si el Apple Watch cuenta dentro de los 3 dispositivos (en la maqueta sí).
 - iOS 17 o iOS 18 como mínimo (los controles requieren iOS 18).
 - Push por APNs directo o FCM.
 - Nombre definitivo de la app (va en las frases de Siri; hoy `AppInfo.name = "Acceso"` y el

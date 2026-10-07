@@ -176,11 +176,10 @@ struct DevicesView: View {
     let repository: DeviceRepository
 
     @Environment(AppContainer.self) private var container
-    @Environment(SessionStore.self) private var session
     @State private var list: DeviceList?
     @State private var errorMessage: String?
     @State private var confirmRemoval: Device?
-    @State private var linkSent = false
+    @State private var showPairing = false
 
     var body: some View {
         List {
@@ -204,15 +203,15 @@ struct DevicesView: View {
                         }
                     }
                 }
-                if let list, list.devices.count < list.maxDevices {
-                    let free = list.maxDevices - list.devices.count
+                if let list, list.freeSlots > 0 {
+                    let free = list.freeSlots
                     Text("\(free) \(free == 1 ? "lugar disponible" : "lugares disponibles")")
                         .font(.footnote)
                         .foregroundStyle(.secondary)
                         .frame(maxWidth: .infinity)
                 }
             } header: {
-                Text("Puedes tener hasta 3 dispositivos. Cada uno tiene su propia llave.")
+                Text("Puedes tener hasta 3 teléfonos o tabletas; tus Apple Watch no cuentan. Cada uno tiene su propia llave.")
                     .textCase(nil)
             } footer: {
                 FootnoteLabel(text: "Si alguien entra con tu número en otro teléfono, te avisamos aquí.", systemImage: "bell")
@@ -237,44 +236,39 @@ struct DevicesView: View {
             Text("Dejará de abrir la pluma y de recibir avisos al instante.")
         }
         .errorAlert($errorMessage)
-        .alert("Abre \(AppInfo.name) en tu Apple Watch", isPresented: $linkSent) {
-            Button("Aceptar", role: .cancel) {}
-        } message: {
-            Text("Ahí termina de vincularse. Después funciona aunque el iPhone no esté cerca.")
+        .sheet(isPresented: $showPairing, onDismiss: { Task { await load() } }) {
+            WatchPairingView()
         }
     }
 
     /// Vincular el Apple Watch (sección G): el reloj registra su propia llave.
-    @ViewBuilder
     private var watchSection: some View {
         let hasWatch = list?.devices.contains { $0.model == .watch } ?? false
-        Section {
-            AsyncButton {
-                await linkWatch()
+        return Section {
+            Button {
+                showPairing = true
             } label: {
-                Label(hasWatch ? "Volver a vincular Apple Watch" : "Vincular Apple Watch", systemImage: "applewatch")
+                HStack(spacing: 14) {
+                    Image(systemName: "applewatch.radiowaves.left.and.right")
+                        .font(.title2)
+                        .symbolRenderingMode(.hierarchical)
+                        .foregroundStyle(.tint)
+                        .frame(width: 36)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(hasWatch ? "Volver a vincular Apple Watch" : "Vincular Apple Watch")
+                            .font(.body.weight(.semibold))
+                            .foregroundStyle(.primary)
+                        Text("Visitas, pluma, QR y pánico en tu muñeca")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    Spacer(minLength: 0)
+                    Image(systemName: "chevron.forward")
+                        .font(.footnote.weight(.semibold))
+                        .foregroundStyle(.tertiary)
+                }
+                .padding(.vertical, 4)
             }
-            .disabled(!container.watch.canLink)
-        } footer: {
-            Text(container.watch.canLink
-                 ? "Abre la pluma, responde visitas y muestra tu QR desde el reloj, con su propia llave."
-                 : "Instala \(AppInfo.name) en tu Apple Watch desde la app Watch para vincularlo.")
-        }
-    }
-
-    private func linkWatch() async {
-        do {
-            let ticket = try await repository.createWatchLink()
-            var account: Data?
-            if let server = container.mockServer, let userId = session.profile?.id {
-                account = await server.exportAccount(userId: userId)
-            }
-            try container.watch.send(.link(code: ticket.code, mockAccount: account))
-            linkSent = true
-        } catch BiometricError.canceled {
-            return
-        } catch {
-            errorMessage = error.userMessage
         }
     }
 

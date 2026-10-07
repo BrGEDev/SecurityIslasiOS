@@ -15,6 +15,10 @@ import WatchConnectivity
 final class PhoneWatchBridge: NSObject, WCSessionDelegate {
     private(set) var isPaired = false
     private(set) var isWatchAppInstalled = false
+    /// La app del reloj está abierta y responde al instante.
+    private(set) var isReachable = false
+    /// Último reloj que confirmó el vínculo (la pantalla de vincular lo observa).
+    private(set) var lastLinked: LinkedWatch?
 
     /// El reloj confirmó que ya está vinculado.
     @ObservationIgnored var onLinked: ((LinkedWatch) async -> Void)?
@@ -65,6 +69,10 @@ final class PhoneWatchBridge: NSObject, WCSessionDelegate {
         updateState(from: session)
     }
 
+    nonisolated func sessionReachabilityDidChange(_ session: WCSession) {
+        updateState(from: session)
+    }
+
     nonisolated func sessionDidBecomeInactive(_ session: WCSession) {}
 
     /// Al cambiar de reloj, iOS desactiva la sesión: se vuelve a activar.
@@ -83,15 +91,18 @@ final class PhoneWatchBridge: NSObject, WCSessionDelegate {
     nonisolated private func updateState(from session: WCSession) {
         let paired = session.isPaired
         let installed = session.isWatchAppInstalled
+        let reachable = session.isReachable
         Task { @MainActor [weak self] in
             self?.isPaired = paired
             self?.isWatchAppInstalled = installed
+            self?.isReachable = reachable
         }
     }
 
     nonisolated private func receive(_ envelope: WatchEnvelope?) {
         guard case .linked(let watch) = envelope else { return }
         Task { @MainActor [weak self] in
+            self?.lastLinked = watch
             await self?.onLinked?(watch)
         }
     }
