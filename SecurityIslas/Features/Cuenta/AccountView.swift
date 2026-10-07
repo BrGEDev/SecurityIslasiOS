@@ -41,31 +41,31 @@ struct AccountView: View {
 
             Section {
                 if !profile.isRestrictedOwner {
-                    row(.family, icon: "person.2.fill", tint: .blue, title: "Familia", value: summary.family)
+                    row(.family, icon: "person.2.fill", title: "Familia", value: summary.family)
                 }
-                row(.contacts, icon: "heart.fill", tint: .pink, title: "Contactos de emergencia", value: summary.contacts)
-                row(.devices, icon: "iphone", tint: .gray, title: "Dispositivos", value: summary.devices)
+                row(.contacts, icon: "heart.fill", title: "Contactos de emergencia", value: summary.contacts)
+                row(.devices, icon: "iphone", title: "Dispositivos", value: summary.devices)
             } footer: {
                 Text("Los cambios en esta sección piden \(container.biometrics.biometryName).")
             }
 
             if profile.canManageHousehold {
                 Section("Vivienda") {
-                    row(.guests, icon: "bag.fill", tint: .orange, title: "Huéspedes", value: summary.guests)
-                    row(.workPermit, icon: "hammer.fill", tint: .brown, title: "Permiso de obra", value: summary.workPermit)
+                    row(.guests, icon: "bag.fill", title: "Huéspedes", value: summary.guests)
+                    row(.workPermit, icon: "hammer.fill", title: "Permiso de obra", value: summary.workPermit)
                 }
             }
 
             if !profile.isRestrictedOwner {
                 Section("Paquetería") {
-                    row(.packagePolicy, icon: "shippingbox.fill", tint: .indigo, title: "Cuando llegue un paquete", value: summary.packagePolicy)
-                    row(.packages, icon: "tray.full.fill", tint: .teal, title: "Paquetes en caseta", value: nil)
+                    row(.packagePolicy, icon: "shippingbox.fill", title: "Cuando llegue un paquete", value: summary.packagePolicy)
+                    row(.packages, icon: "tray.full.fill", title: "Paquetes en caseta", value: nil)
                 }
             }
 
             if container.usesMockBackend {
                 Section {
-                    row(.simulation, icon: "wrench.and.screwdriver.fill", tint: .gray, title: "Simulación (backend de prueba)", value: nil)
+                    row(.simulation, icon: "wrench.and.screwdriver.fill", title: "Simulación (backend de prueba)", value: nil)
                 } footer: {
                     Text("Solo aparece mientras la app usa datos de ejemplo.")
                 }
@@ -88,7 +88,7 @@ struct AccountView: View {
         }
     }
 
-    private func row(_ route: AccountRoute, icon: String, tint: Color, title: String, value: String?) -> some View {
+    private func row(_ route: AccountRoute, icon: String, title: String, value: String?) -> some View {
         NavigationLink(value: route) {
             LabeledContent {
                 if let value {
@@ -98,7 +98,7 @@ struct AccountView: View {
                 Label {
                     Text(title)
                 } icon: {
-                    SettingsIcon(systemName: icon, tint: tint)
+                    SettingsIcon(systemName: icon)
                 }
             }
         }

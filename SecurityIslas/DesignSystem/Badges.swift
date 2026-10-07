@@ -90,19 +90,28 @@ struct IconTile: View {
     }
 }
 
-/// Ícono de fila al estilo de Ajustes: cuadro de color con el símbolo en blanco.
+/// Ícono de fila al estilo de Configuración: cuadro con el símbolo en blanco.
+///
+/// Cada símbolo de SF Symbols tiene proporciones distintas (`iphone` es alto,
+/// `person.2.fill` es ancho). Para que todos se vean del mismo tamaño, el glifo
+/// se ajusta a una caja fija (60 % del cuadro) en lugar de usar un tamaño de
+/// fuente: así el margen alrededor es el mismo en todas las filas.
 struct SettingsIcon: View {
     let systemName: String
+    /// Por omisión, el color de acento de la app.
     var tint: Color = .accentColor
 
-    @ScaledMetric(relativeTo: .body) private var side: CGFloat = 29
+    @ScaledMetric(relativeTo: .body) private var side: CGFloat = 30
 
     var body: some View {
         Image(systemName: systemName)
-            .font(.system(size: side * 0.55, weight: .semibold))
+            .resizable()
+            .scaledToFit()
+            .fontWeight(.semibold)
             .foregroundStyle(.white)
+            .frame(width: side * 0.6, height: side * 0.6)
             .frame(width: side, height: side)
-            .background(tint.gradient, in: .rect(cornerRadius: side * 0.24, style: .continuous))
+            .background(tint.gradient, in: .rect(cornerRadius: side * 0.26, style: .continuous))
             .accessibilityHidden(true)
     }
 }
