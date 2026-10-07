@@ -121,7 +121,7 @@ final class AppContainer {
             } catch {
                 // Ej. ya se respondió en la app o lo hizo otro integrante (409):
                 // se avisa en lugar de fallar en silencio.
-                self?.notifications.notify(title: "No se aplicó tu respuesta", body: error.userMessage)
+                self?.notifications.notify(title: "No se aplicó tu respuesta", body: error.userMessage ?? "Ocurrió un error inesperado")
             }
             self?.dataDidChange()
         }
