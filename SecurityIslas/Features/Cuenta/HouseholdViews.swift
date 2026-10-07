@@ -265,6 +265,8 @@ struct EmergencyContactsView: View {
     @Environment(\.openURL) private var openURL
     @State private var contacts: [EmergencyContact] = []
     @State private var pendingContactRemoval: EmergencyContact?
+    @State private var settingsPrompt: LocationSettingsPrompt?
+    @Environment(\.scenePhase) private var scenePhase
     @State private var showAdd = false
     @State private var errorMessage: String?
 
@@ -302,9 +304,13 @@ struct EmergencyContactsView: View {
                     get: { container.location.authorization == .always },
                     set: { enabled in
                         if enabled {
-                            container.location.requestAlways()
-                        } else if let url = URL(string: UIApplication.openSettingsURLString) {
-                            openURL(url)
+                            // Si iOS ya no mostrará su aviso, se explica y se manda a Ajustes.
+                            if !container.location.requestAlways() {
+                                settingsPrompt = .enableAlways
+                            }
+                        } else {
+                            // Las apps no pueden quitarse permisos; solo el usuario en Ajustes.
+                            settingsPrompt = .disableAlways
                         }
                     }
                 )) {
@@ -314,6 +320,8 @@ struct EmergencyContactsView: View {
                     }
                 }
                 .tint(.green)
+            } footer: {
+                Text(locationFooter)
             }
         }
         .readableContentWidth()
@@ -326,6 +334,22 @@ struct EmergencyContactsView: View {
             Button("Cancelar", role: .cancel) {}
         } message: { _ in
             Text("Ya no recibirá tus alertas de pánico.")
+        }
+        .alert(
+            settingsPrompt?.title ?? "",
+            isPresented: Binding(get: { settingsPrompt != nil }, set: { if !$0 { settingsPrompt = nil } }),
+            presenting: settingsPrompt
+        ) { _ in
+            Button("Abrir Ajustes") {
+                if let url = URL(string: UIApplication.openSettingsURLString) { openURL(url) }
+            }
+            Button("Ahora no", role: .cancel) {}
+        } message: { prompt in
+            Text(prompt.message)
+        }
+        // Al volver de Ajustes (o del aviso de iOS) el switch refleja el permiso real.
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .active { container.location.refreshAuthorization() }
         }
         .navigationTitle("Contactos")
         .navigationBarTitleDisplayMode(.inline)
@@ -344,6 +368,19 @@ struct EmergencyContactsView: View {
             contacts = try await repository.contacts()
         } catch {
             errorMessage = error.userMessage
+        }
+    }
+
+    private var locationFooter: String {
+        switch container.location.authorization {
+        case .always:
+            "Si activas el pánico, tus contactos y la caseta reciben tu ubicación aunque cierres la app."
+        case .whenInUse:
+            "Ahora solo se comparte con la app abierta. Si la cierras durante una alerta, dejamos de enviar tu ubicación."
+        case .denied:
+            "La ubicación está desactivada. El pánico avisará sin tu ubicación."
+        case .notDetermined:
+            "Activa la ubicación para que el pánico la comparta."
         }
     }
 
@@ -402,6 +439,30 @@ private struct AddContactSheet: View {
                 }
             }
             .errorAlert($errorMessage)
+        }
+    }
+}
+
+/// Avisos para cambiar el permiso de ubicación en Ajustes.
+private enum LocationSettingsPrompt: Identifiable {
+    case enableAlways
+    case disableAlways
+
+    var id: Self { self }
+
+    var title: String {
+        switch self {
+        case .enableAlways: "Activa \"Siempre\" en Ajustes"
+        case .disableAlways: "Cambia el permiso en Ajustes"
+        }
+    }
+
+    var message: String {
+        switch self {
+        case .enableAlways:
+            "En Ajustes › Ubicación, elige \"Siempre\" para que el pánico comparta tu ubicación aunque la app esté cerrada."
+        case .disableAlways:
+            "En Ajustes › Ubicación, elige \"Al usar la app\". El pánico solo compartirá tu ubicación con la app abierta."
         }
     }
 }

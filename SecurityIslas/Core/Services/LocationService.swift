@@ -68,6 +68,7 @@ final class LocationService: NSObject, CLLocationManagerDelegate {
     let usesSimulation: Bool
     private let manager = CLLocationManager()
     private static let simulationKey = "mock.simulatedPosition"
+    private static let alwaysRequestedKey = "location.alwaysRequested"
 
     init(usesSimulation: Bool) {
         self.usesSimulation = usesSimulation
@@ -88,9 +89,30 @@ final class LocationService: NSObject, CLLocationManagerDelegate {
         manager.requestWhenInUseAuthorization()
     }
 
+    /// iOS solo muestra una vez el aviso para pasar a "Siempre". Si el usuario
+    /// elige "Mantener solo al usar", las siguientes llamadas no hacen nada:
+    /// a partir de ahí el cambio solo se hace en Ajustes.
+    var canPromptForAlways: Bool {
+        switch authorization {
+        case .notDetermined: true
+        case .whenInUse: !UserDefaults.standard.bool(forKey: Self.alwaysRequestedKey)
+        case .always, .denied: false
+        }
+    }
+
     /// El permiso "Siempre" se pide al configurar el pánico (pantalla 35).
-    func requestAlways() {
+    /// Regresa `false` si iOS ya no mostrará el aviso y hay que ir a Ajustes.
+    @discardableResult
+    func requestAlways() -> Bool {
+        guard canPromptForAlways else { return false }
+        UserDefaults.standard.set(true, forKey: Self.alwaysRequestedKey)
         manager.requestAlwaysAuthorization()
+        return true
+    }
+
+    /// Vuelve a leer el permiso (por ejemplo, al regresar de Ajustes).
+    func refreshAuthorization() {
+        authorization = LocationAuthorization(manager.authorizationStatus)
     }
 
     /// Ubicación de alta precisión para la orden de apertura o el pánico.
