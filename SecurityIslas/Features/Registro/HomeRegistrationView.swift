@@ -59,6 +59,7 @@ struct HomeRegistrationView: View {
                 Section { InlineError(message: error) }
             }
         }
+        .readableContentWidth()
         .onboardingStep(4)
         .safeAreaInset(edge: .bottom) {
             BottomActionBar {
@@ -98,6 +99,7 @@ struct HomePickerView: View {
             }
         }
         .searchable(text: $query, prompt: "Calle y número")
+        .readableContentWidth()
         .navigationTitle("Vivienda")
         .navigationBarTitleDisplayMode(.inline)
         .overlay {

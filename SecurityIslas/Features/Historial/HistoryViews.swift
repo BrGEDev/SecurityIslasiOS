@@ -78,6 +78,7 @@ struct HistoryView: View {
                 }
             }
         }
+        .readableContentWidth()
         .navigationTitle("Historial")
         .navigationBarTitleDisplayMode(.inline)
         .refreshable { await load() }
@@ -155,6 +156,7 @@ struct PackagesView: View {
                 }
             }
         }
+        .readableContentWidth()
         .navigationTitle("Paquetes")
         .navigationBarTitleDisplayMode(.inline)
         .refreshable { await load() }

@@ -75,6 +75,7 @@ struct PermissionsView: View {
             .padding()
         }
         .background(Color(.systemGroupedBackground))
+        .readableContentWidth()
         .navigationBarBackButtonHidden()
         .safeAreaInset(edge: .bottom) {
             BottomActionBar {
@@ -174,6 +175,7 @@ struct FaceIDSetupView: View {
             .padding()
         }
         .background(Color(.systemGroupedBackground))
+        .readableContentWidth()
         .safeAreaInset(edge: .bottom) {
             BottomActionBar {
                 AsyncButton("Activar \(biometryName)") { await activate() }

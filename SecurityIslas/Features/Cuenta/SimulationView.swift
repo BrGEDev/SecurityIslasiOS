@@ -73,6 +73,7 @@ struct SimulationView: View {
                 Section { Text(lastAction).foregroundStyle(.secondary) }
             }
         }
+        .readableContentWidth()
         .navigationTitle("Simulación")
         .navigationBarTitleDisplayMode(.inline)
     }

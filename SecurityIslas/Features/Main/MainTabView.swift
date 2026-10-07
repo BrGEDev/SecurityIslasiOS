@@ -88,64 +88,94 @@ struct MainTabView: View {
     @State private var router = MainRouter()
 
     var body: some View {
-        TabView(selection: $router.selectedTab) {
-            NavigationStack(path: $router.homePath) {
-                Group {
-                    if profile.isRestrictedOwner {
-                        OwnerHomeView(profile: profile)
-                    } else {
-                        HomeView(profile: profile, container: container)
-                    }
+        tabs
+            .environment(router)
+            .fullScreenCover(item: $router.panic) { entry in
+                PanicFlowView(model: PanicViewModel(
+                    entry: entry,
+                    repository: container.panic,
+                    location: container.location,
+                    gate: router.gateConfiguration ?? MockSeed.gate,
+                    residenceName: profile.residence?.fraccionamientoName ?? "tu fraccionamiento"
+                ))
+            }
+            .sheet(isPresented: $router.showNewInvitation) {
+                NewInvitationView(repository: container.visits) {
+                    container.dataDidChange()
                 }
-                .navigationDestination(for: HomeRoute.self) { route in
-                    switch route {
-                    case .history: HistoryView(repository: container.visits)
-                    case .packages: PackagesView(repository: container.visits)
-                    }
+            }
+            .onChange(of: container.pendingInviteCode) { _, code in
+                // Un enlace de invitación con sesión activa no aplica: ya tiene vivienda.
+                if code != nil { container.pendingInviteCode = nil }
+            }
+    }
+
+    /// iOS 18+: API de `Tab` con estilo adaptable. En la pantalla interior del
+    /// iPhone Duo (o en iPad) las pestañas pasan a una barra lateral.
+    @ViewBuilder
+    private var tabs: some View {
+        if #available(iOS 18, *) {
+            TabView(selection: $router.selectedTab) {
+                Tab("Inicio", systemImage: "house", value: MainTab.home) { homeTab }
+                Tab("Visitas", systemImage: "person.2", value: MainTab.visits) { visitsTab }
+                Tab("Mi QR", systemImage: "qrcode", value: MainTab.qr) { qrTab }
+                Tab("Cuenta", systemImage: "person.crop.circle", value: MainTab.account) { accountTab }
+            }
+            .tabViewStyle(.sidebarAdaptable)
+        } else {
+            TabView(selection: $router.selectedTab) {
+                homeTab
+                    .tabItem { Label("Inicio", systemImage: "house") }
+                    .tag(MainTab.home)
+                visitsTab
+                    .tabItem { Label("Visitas", systemImage: "person.2") }
+                    .tag(MainTab.visits)
+                qrTab
+                    .tabItem { Label("Mi QR", systemImage: "qrcode") }
+                    .tag(MainTab.qr)
+                accountTab
+                    .tabItem { Label("Cuenta", systemImage: "person.crop.circle") }
+                    .tag(MainTab.account)
+            }
+        }
+    }
+
+    private var homeTab: some View {
+        NavigationStack(path: $router.homePath) {
+            Group {
+                if profile.isRestrictedOwner {
+                    OwnerHomeView(profile: profile)
+                } else {
+                    HomeView(profile: profile, container: container)
                 }
             }
-            .tabItem { Label("Inicio", systemImage: "house") }
-            .tag(MainTab.home)
-
-            NavigationStack {
-                VisitsView(profile: profile, container: container)
-            }
-            .tabItem { Label("Visitas", systemImage: "person.2") }
-            .tag(MainTab.visits)
-
-            NavigationStack {
-                MyQRView(profile: profile, generator: container.residentQR)
-            }
-            .tabItem { Label("Mi QR", systemImage: "qrcode") }
-            .tag(MainTab.qr)
-
-            NavigationStack(path: $router.accountPath) {
-                AccountView(profile: profile)
-                    .navigationDestination(for: AccountRoute.self) { route in
-                        accountDestination(route)
-                    }
-            }
-            .tabItem { Label("Cuenta", systemImage: "person.crop.circle") }
-            .tag(MainTab.account)
-        }
-        .environment(router)
-        .fullScreenCover(item: $router.panic) { entry in
-            PanicFlowView(model: PanicViewModel(
-                entry: entry,
-                repository: container.panic,
-                location: container.location,
-                gate: router.gateConfiguration ?? MockSeed.gate,
-                residenceName: profile.residence?.fraccionamientoName ?? "tu fraccionamiento"
-            ))
-        }
-        .sheet(isPresented: $router.showNewInvitation) {
-            NewInvitationView(repository: container.visits) {
-                container.dataDidChange()
+            .navigationDestination(for: HomeRoute.self) { route in
+                switch route {
+                case .history: HistoryView(repository: container.visits)
+                case .packages: PackagesView(repository: container.visits)
+                }
             }
         }
-        .onChange(of: container.pendingInviteCode) { _, code in
-            // Un enlace de invitación con sesión activa no aplica: ya tiene vivienda.
-            if code != nil { container.pendingInviteCode = nil }
+    }
+
+    private var visitsTab: some View {
+        NavigationStack {
+            VisitsView(profile: profile, container: container)
+        }
+    }
+
+    private var qrTab: some View {
+        NavigationStack {
+            MyQRView(profile: profile, generator: container.residentQR)
+        }
+    }
+
+    private var accountTab: some View {
+        NavigationStack(path: $router.accountPath) {
+            AccountView(profile: profile)
+                .navigationDestination(for: AccountRoute.self) { route in
+                    accountDestination(route)
+                }
         }
     }
 

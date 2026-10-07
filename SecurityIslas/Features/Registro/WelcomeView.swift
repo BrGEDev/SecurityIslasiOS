@@ -16,7 +16,8 @@ struct WelcomeView: View {
 
     var body: some View {
         GeometryReader { proxy in
-            let ancho = proxy.size.width
+            // En ventanas anchas (iPhone Duo abierto, iPad) el contenido no se estira.
+            let ancho = min(proxy.size.width, 520)
 
             VStack(spacing: 10) {
                 Image(.logo)
@@ -87,6 +88,7 @@ struct WelcomeView: View {
             }
             .padding(.top, 20)
             .frame(width: ancho, height: proxy.size.height)
+            .frame(maxWidth: .infinity)
         }
         // La imagen va de fondo para que no cambie el tamaño del contenido.
         .background {
@@ -155,6 +157,7 @@ struct InviteCodeSheet: View {
             }
         }
         .presentationDetents([.medium])
+        .presentationDragIndicator(.visible)
     }
 
     /// Acepta el enlace completo o solo el código.

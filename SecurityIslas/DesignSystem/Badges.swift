@@ -13,11 +13,13 @@ struct StatusChip: View {
 
     var body: some View {
         Text(text)
-            .font(.caption2.weight(.bold))
+            .font(.caption2.weight(.semibold))
+            .lineLimit(1)
             .padding(.horizontal, 8)
-            .padding(.vertical, 4)
+            .padding(.vertical, 3)
             .foregroundStyle(tint)
-            .background(tint.opacity(0.14), in: .rect(cornerRadius: 6))
+            .background(tint.opacity(0.15), in: Capsule())
+            .fixedSize()
     }
 }
 
@@ -46,32 +48,61 @@ extension AccessKind {
     }
 }
 
+/// Monograma con el estilo de Contactos: degradado suave y letras blancas.
 struct InitialsAvatar: View {
     let initials: String
     var size: CGFloat = 40
     var tint: Color = Color(.systemGray)
 
+    @ScaledMetric(relativeTo: .body) private var scale: CGFloat = 1
+
     var body: some View {
+        let side = size * min(scale, 1.4)
         Text(initials)
-            .font(.system(size: size * 0.36, weight: .semibold))
-            .foregroundStyle(tint)
-            .frame(width: size, height: size)
-            .background(tint.opacity(0.15), in: Circle())
+            .font(.system(size: side * 0.4, weight: .semibold, design: .rounded))
+            .foregroundStyle(.white)
+            .frame(width: side, height: side)
+            .background(
+                LinearGradient(colors: [tint.opacity(0.65), tint], startPoint: .top, endPoint: .bottom),
+                in: Circle()
+            )
             .accessibilityHidden(true)
     }
 }
 
+/// Ícono teñido para tarjetas y filas de contenido.
 struct IconTile: View {
     let systemName: String
     var tint: Color = .accentColor
     var size: CGFloat = 34
 
+    @ScaledMetric(relativeTo: .body) private var scale: CGFloat = 1
+
+    var body: some View {
+        let side = size * min(scale, 1.4)
+        Image(systemName: systemName)
+            .symbolRenderingMode(.hierarchical)
+            .font(.system(size: side * 0.48, weight: .semibold))
+            .foregroundStyle(tint)
+            .frame(width: side, height: side)
+            .background(tint.opacity(0.14), in: .rect(cornerRadius: side * 0.3, style: .continuous))
+            .accessibilityHidden(true)
+    }
+}
+
+/// Ícono de fila al estilo de Ajustes: cuadro de color con el símbolo en blanco.
+struct SettingsIcon: View {
+    let systemName: String
+    var tint: Color = .accentColor
+
+    @ScaledMetric(relativeTo: .body) private var side: CGFloat = 29
+
     var body: some View {
         Image(systemName: systemName)
-            .font(.system(size: size * 0.45, weight: .semibold))
-            .foregroundStyle(tint)
-            .frame(width: size, height: size)
-            .background(tint.opacity(0.12), in: .rect(cornerRadius: size * 0.28))
+            .font(.system(size: side * 0.55, weight: .semibold))
+            .foregroundStyle(.white)
+            .frame(width: side, height: side)
+            .background(tint.gradient, in: .rect(cornerRadius: side * 0.24, style: .continuous))
             .accessibilityHidden(true)
     }
 }

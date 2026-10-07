@@ -16,18 +16,13 @@ struct OwnerHomeView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
-                HStack(alignment: .top) {
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(profile.residence?.fraccionamientoName ?? "")
-                            .font(.footnote).foregroundStyle(.secondary)
-                        Text("Hola, \(profile.firstName)").font(.largeTitle.bold())
-                        Text("\(profile.residence?.name ?? "") · rentada")
-                            .font(.footnote).foregroundStyle(.secondary)
-                    }
-                    Spacer()
-                    InitialsAvatar(initials: profile.initials, size: 44, tint: .accentColor)
+                if #available(iOS 26, *) {
+                    EmptyView()
+                } else {
+                    Text(residenceLine)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
                 }
-                .padding(.top, 8)
 
                 Button {
                     router.selectedTab = .qr
@@ -68,8 +63,25 @@ struct OwnerHomeView: View {
             }
             .padding(.horizontal)
         }
+        .readableContentWidth()
         .background(Color(.systemGroupedBackground))
-        .toolbar(.hidden, for: .navigationBar)
+        .navigationTitle("Hola, \(profile.firstName)")
+        .navigationBarTitleDisplayMode(.large)
+        .navigationSubtitleCompat(residenceLine)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button {
+                    router.selectedTab = .account
+                } label: {
+                    InitialsAvatar(initials: profile.initials, size: 32, tint: .accentColor)
+                }
+                .accessibilityLabel("Cuenta")
+            }
+        }
+    }
+
+    private var residenceLine: String {
+        "\(profile.residence?.name ?? "") · rentada"
     }
 
     private func row(icon: String, title: String, subtitle: String, action: @escaping () -> Void) -> some View {
@@ -81,7 +93,7 @@ struct OwnerHomeView: View {
                     Text(subtitle).font(.caption).foregroundStyle(.secondary)
                 }
                 Spacer()
-                Image(systemName: "chevron.right").font(.caption).foregroundStyle(.tertiary)
+                Image(systemName: "chevron.forward").font(.caption).foregroundStyle(.tertiary)
             }
             .padding(14)
         }

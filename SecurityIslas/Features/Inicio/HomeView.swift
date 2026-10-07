@@ -29,49 +29,57 @@ struct HomeView: View {
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 16) {
-                header
-
-                if let visit = model.pendingVisit {
-                    PendingVisitCard(
-                        visit: visit,
-                        extraCount: model.extraPendingCount,
-                        isResponding: model.respondingVisitId == visit.id
-                    ) { decision in
-                        await model.decide(visit, decision)
-                    }
-                    .transition(.move(edge: .top).combined(with: .opacity))
+                if #available(iOS 26, *) {
+                    // En iOS 26 la vivienda va como subtítulo de la barra de navegación.
+                    EmptyView()
+                } else {
+                    Text(residenceLine)
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
                 }
 
-                GateButton(model: model.gate)
-
-                quickActions
-
-                if let summary = model.summary, summary.packagesAtBooth > 0 {
-                    Button {
-                        router.homePath.append(.packages)
-                    } label: {
-                        HStack(spacing: 12) {
-                            IconTile(systemName: "shippingbox.fill", tint: .orange)
-                            Text("\(summary.packagesAtBooth) \(summary.packagesAtBooth == 1 ? "paquete" : "paquetes") en caseta")
-                                .font(.subheadline.weight(.semibold))
-                                .foregroundStyle(.primary)
-                            Spacer()
-                            Image(systemName: "chevron.right").font(.caption).foregroundStyle(.tertiary)
+                AdaptiveColumns {
+                    if let visit = model.pendingVisit {
+                        PendingVisitCard(
+                            visit: visit,
+                            extraCount: model.extraPendingCount,
+                            isResponding: model.respondingVisitId == visit.id
+                        ) { decision in
+                            await model.decide(visit, decision)
                         }
-                        .padding(12)
-                        .background(Color.orange.opacity(0.1), in: .rect(cornerRadius: 16))
+                        .transition(.move(edge: .top).combined(with: .opacity))
                     }
-                    .buttonStyle(.plain)
-                }
 
-                todaySection
+                    GateButton(model: model.gate)
+
+                    quickActions
+
+                    if let summary = model.summary, summary.packagesAtBooth > 0 {
+                        packagesBanner(count: summary.packagesAtBooth)
+                    }
+                } trailing: {
+                    todaySection
+                }
             }
             .padding(.horizontal)
             .padding(.bottom, 24)
             .animation(.snappy, value: model.pendingVisit?.id)
         }
+        .readableContentWidth(1_000)
         .background(Color(.systemGroupedBackground))
-        .toolbar(.hidden, for: .navigationBar)
+        .navigationTitle("Hola, \(profile.firstName)")
+        .navigationBarTitleDisplayMode(.large)
+        .navigationSubtitleCompat(residenceLine)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button {
+                    router.selectedTab = .account
+                } label: {
+                    InitialsAvatar(initials: profile.initials, size: 32, tint: .accentColor)
+                }
+                .accessibilityLabel("Cuenta")
+            }
+        }
         .refreshable { await model.load() }
         .safeAreaInset(edge: .bottom) {
             PanicHoldBar {
@@ -81,6 +89,7 @@ struct HomeView: View {
             }
             .padding(.horizontal)
             .padding(.bottom, 8)
+            .readableContentWidth(560)
         }
         .task(id: container.dataVersion) {
             await model.load()
@@ -92,28 +101,29 @@ struct HomeView: View {
         .errorAlert($model.errorMessage)
     }
 
-    private var header: some View {
-        HStack(alignment: .top) {
-            VStack(alignment: .leading, spacing: 2) {
-                Text(profile.residence?.fraccionamientoName ?? "")
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
-                Text("Hola, \(profile.firstName)")
-                    .font(.largeTitle.bold())
-                Text(profile.residence?.name ?? "")
-                    .font(.footnote)
-                    .foregroundStyle(.secondary)
+    private var residenceLine: String {
+        guard let residence = profile.residence else { return "" }
+        return "\(residence.name) · \(residence.fraccionamientoName)"
+    }
+
+    private func packagesBanner(count: Int) -> some View {
+        Button {
+            router.homePath.append(.packages)
+        } label: {
+            HStack(spacing: 12) {
+                IconTile(systemName: "shippingbox.fill", tint: .orange)
+                Text("\(count) \(count == 1 ? "paquete" : "paquetes") en caseta")
+                    .font(.subheadline.weight(.semibold))
+                    .foregroundStyle(.primary)
+                Spacer()
+                Image(systemName: "chevron.forward")
+                    .font(.footnote.weight(.semibold))
+                    .foregroundStyle(.tertiary)
             }
-            .accessibilityElement(children: .combine)
-            Spacer()
-            Button {
-                router.selectedTab = .account
-            } label: {
-                InitialsAvatar(initials: profile.initials, size: 44, tint: .accentColor)
-            }
-            .accessibilityLabel("Cuenta")
+            .padding(12)
+            .background(Color.orange.opacity(0.12), in: .rect(cornerRadius: 18, style: .continuous))
         }
-        .padding(.top, 8)
+        .buttonStyle(.plain)
     }
 
     private var quickActions: some View {
@@ -127,19 +137,21 @@ struct HomeView: View {
 
     @ViewBuilder
     private var todaySection: some View {
-        HStack {
-            Text("HOY")
-                .font(.footnote.weight(.semibold))
-                .foregroundStyle(.secondary)
+        HStack(alignment: .firstTextBaseline) {
+            Text("Hoy")
+                .font(.title3.bold())
+                .accessibilityAddTraits(.isHeader)
             Spacer()
             Button("Ver todo") { router.homePath.append(.history) }
-                .font(.footnote.weight(.semibold))
+                .font(.subheadline)
         }
         .padding(.top, 4)
 
-        let today = model.summary?.today ?? []
-        if today.isEmpty {
-            Text(model.summary == nil ? "Cargando…" : "Todavía no hay accesos hoy.")
+        // Mientras carga se muestran filas de ejemplo con `.redacted`.
+        let isLoading = model.summary == nil
+        let today = isLoading ? Visit.placeholders : (model.summary?.today ?? [])
+        if !isLoading && today.isEmpty {
+            Text("Todavía no hay accesos hoy.")
                 .font(.subheadline)
                 .foregroundStyle(.secondary)
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -157,6 +169,7 @@ struct HomeView: View {
                 }
             }
             .cardBackground()
+            .redacted(reason: isLoading ? .placeholder : [])
         }
     }
 }
@@ -224,7 +237,7 @@ struct PendingVisitCard: View {
                         .foregroundStyle(.red)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 12)
-                        .background(Color.red.opacity(0.12), in: .rect(cornerRadius: 12))
+                        .background(Color.red.opacity(0.14), in: Capsule())
                 }
                 AsyncButton {
                     await onDecision(.authorize)
@@ -234,7 +247,7 @@ struct PendingVisitCard: View {
                         .foregroundStyle(.white)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 12)
-                        .background(Color.green, in: .rect(cornerRadius: 12))
+                        .background(Color.green, in: Capsule())
                 }
             }
             .buttonStyle(.plain)
@@ -248,7 +261,7 @@ struct PendingVisitCard: View {
         }
         .padding(16)
         .cardBackground(cornerRadius: 20)
-        .overlay(RoundedRectangle(cornerRadius: 20).stroke(Color.accentColor, lineWidth: 1.5))
+        .overlay(RoundedRectangle(cornerRadius: 20, style: .continuous).strokeBorder(Color.accentColor, lineWidth: 1.5))
         .sensoryFeedback(.warning, trigger: visit.id)
     }
 
@@ -304,5 +317,12 @@ struct VisitRow: View {
             parts.append(visit.statusText.lowercased())
         }
         return parts.joined(separator: " · ")
+    }
+}
+
+private extension Visit {
+    /// Filas de ejemplo para el estado de carga (se dibujan con `.redacted`).
+    static let placeholders: [Visit] = (0..<3).map { index in
+        Visit(id: "placeholder-\(index)", kind: .visit, name: "Nombre de visita", origin: .walkIn, status: .entered, enteredAt: .now)
     }
 }

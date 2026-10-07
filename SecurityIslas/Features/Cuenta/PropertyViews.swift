@@ -36,6 +36,7 @@ struct GuestsView: View {
                 Text("Cada huésped recibe su propio QR para la estancia; te avisamos cada vez que entra y el acceso vence solo.")
             }
         }
+        .readableContentWidth()
         .navigationTitle("Huéspedes")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
@@ -187,6 +188,7 @@ struct WorkPermitView: View {
                 .listRowBackground(Color.clear)
             }
         }
+        .readableContentWidth()
         .navigationTitle("Permiso de obra")
         .navigationBarTitleDisplayMode(.inline)
         .task { await load() }

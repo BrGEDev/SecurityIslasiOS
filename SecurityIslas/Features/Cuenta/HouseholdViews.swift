@@ -60,6 +60,7 @@ struct FamilyView: View {
                 }
             }
         }
+        .readableContentWidth()
         .navigationTitle("Familia")
         .navigationBarTitleDisplayMode(.inline)
         .task { await load() }
@@ -202,6 +203,7 @@ struct DevicesView: View {
                     .padding(.top, 6)
             }
         }
+        .readableContentWidth()
         .navigationTitle("Dispositivos")
         .navigationBarTitleDisplayMode(.inline)
         .task { await load() }
@@ -299,6 +301,7 @@ struct EmergencyContactsView: View {
                 .tint(.green)
             }
         }
+        .readableContentWidth()
         .navigationTitle("Contactos")
         .navigationBarTitleDisplayMode(.inline)
         .task { await load() }

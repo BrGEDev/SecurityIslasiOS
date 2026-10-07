@@ -121,6 +121,29 @@ lejos), llegada de visita/servicio con notificación local, vida del access toke
 
 Para usar el backend real: lanzar con el argumento `-useLiveAPI YES` y ajustar `APIConfig.staging`.
 
+## Diseño nativo e iPhone Duo
+
+- **Acciones:** `ActionButtonStyle` (cápsula, 50 pt que escalan con Dynamic Type, Liquid Glass en
+  iOS 26 y grises del sistema al deshabilitarse). La pantalla de acceso conserva `IslasButton` (marca).
+- **Barras inferiores:** en iOS 26 los botones flotan sobre el contenido; antes usan el material `.bar`.
+- **Inicio:** título grande nativo ("Hola, Brandon") con la vivienda como `navigationSubtitle` en
+  iOS 26 (en iOS 17–25, debajo del título); avatar en la barra; carga con `.redacted`.
+- **Cuenta:** filas con íconos de color al estilo de Ajustes y `LabeledContent`.
+- **Listas:** acciones al deslizar con íconos (autorizar a la izquierda, rechazar a la derecha) y
+  menús contextuales con las mismas acciones; háptico de selección en el segmentado.
+- **Detalles:** esquinas continuas, `chevron.forward`, monogramas tipo Contactos, chips en cápsula,
+  símbolos jerárquicos y efectos de símbolo solo en cambios de estado (sin animaciones perpetuas).
+- **iPhone Duo** (guía de Apple "Prepare your app for iPhone Duo"):
+  - Sin `UIScreen.main`, idiom ni orientación para decidir layout; todo se mide contra el contenedor.
+    Mi QR obtiene la pantalla desde la `UIWindowScene`.
+  - La pantalla interior es regular × regular: `TabView` con `.sidebarAdaptable` (iOS 18+),
+    `readableContentWidth()` limita el ancho de listas y formularios, e Inicio pasa a dos columnas
+    (`AdaptiveColumns`) con un hueco central para que nada quede sobre el pliegue.
+  - Fondos con `ignoresSafeArea()` y controles dentro del área segura (que puede ser asimétrica).
+  - **Pendiente (Xcode 27.1):** usar `GeometryProxy.reservedRegions(kind: .division)` para colocar
+    las columnas según el pliegue real y `onHingeChange` si hace falta. No se usaron todavía porque
+    requieren iOS 27.1 / Xcode 27.1 y el proyecto debe compilar con 27.0.
+
 ## Otras decisiones
 
 - La pantalla de Bienvenida conserva el diseño de marca de Islas (imagen `login-hero`, logo, textos y

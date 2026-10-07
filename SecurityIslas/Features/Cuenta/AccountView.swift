@@ -21,36 +21,51 @@ struct AccountView: View {
         List {
             Section {
                 HStack(spacing: 14) {
-                    InitialsAvatar(initials: profile.initials, size: 56, tint: .accentColor)
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(profile.fullName).font(.headline)
-                        Text([profile.role.title, profile.residence?.name].compactMap { $0 }.joined(separator: " · "))
-                            .font(.caption)
+                    InitialsAvatar(initials: profile.initials, size: 60, tint: .accentColor)
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text(profile.fullName)
+                            .font(.title3.weight(.semibold))
+                        Text(profile.role.title)
+                            .font(.subheadline)
                             .foregroundStyle(.secondary)
+                        if let residence = profile.residence {
+                            Text("\(residence.name) · \(residence.fraccionamientoName)")
+                                .font(.footnote)
+                                .foregroundStyle(.secondary)
+                        }
                     }
                 }
-                .padding(.vertical, 4)
+                .padding(.vertical, 6)
+                .accessibilityElement(children: .combine)
             }
 
             Section {
                 if !profile.isRestrictedOwner {
-                    row(.family, icon: "person.2", title: "Familia", value: summary.family)
+                    row(.family, icon: "person.2.fill", tint: .blue, title: "Familia", value: summary.family)
                 }
-                row(.contacts, icon: "heart", title: "Contactos de emergencia", value: summary.contacts)
-                row(.devices, icon: "iphone", title: "Dispositivos", value: summary.devices)
-                if profile.canManageHousehold {
-                    row(.guests, icon: "bag", title: "Huéspedes", value: summary.guests)
-                    row(.workPermit, icon: "hammer", title: "Permiso de obra", value: summary.workPermit)
+                row(.contacts, icon: "heart.fill", tint: .pink, title: "Contactos de emergencia", value: summary.contacts)
+                row(.devices, icon: "iphone", tint: .gray, title: "Dispositivos", value: summary.devices)
+            } footer: {
+                Text("Los cambios en esta sección piden \(container.biometrics.biometryName).")
+            }
+
+            if profile.canManageHousehold {
+                Section("Vivienda") {
+                    row(.guests, icon: "bag.fill", tint: .orange, title: "Huéspedes", value: summary.guests)
+                    row(.workPermit, icon: "hammer.fill", tint: .brown, title: "Permiso de obra", value: summary.workPermit)
                 }
-                if !profile.isRestrictedOwner {
-                    row(.packagePolicy, icon: "shippingbox", title: "Paquetería", value: summary.packagePolicy)
-                    row(.packages, icon: "tray.full", title: "Paquetes en caseta", value: nil)
+            }
+
+            if !profile.isRestrictedOwner {
+                Section("Paquetería") {
+                    row(.packagePolicy, icon: "shippingbox.fill", tint: .indigo, title: "Cuando llegue un paquete", value: summary.packagePolicy)
+                    row(.packages, icon: "tray.full.fill", tint: .teal, title: "Paquetes en caseta", value: nil)
                 }
             }
 
             if container.usesMockBackend {
                 Section {
-                    row(.simulation, icon: "hammer.circle", title: "Simulación (backend de prueba)", value: nil)
+                    row(.simulation, icon: "wrench.and.screwdriver.fill", tint: .gray, title: "Simulación (backend de prueba)", value: nil)
                 } footer: {
                     Text("Solo aparece mientras la app usa datos de ejemplo.")
                 }
@@ -58,8 +73,10 @@ struct AccountView: View {
 
             Section {
                 Button("Cerrar sesión", role: .destructive) { confirmSignOut = true }
+                    .frame(maxWidth: .infinity)
             }
         }
+        .readableContentWidth()
         .navigationTitle("Cuenta")
         .task(id: container.dataVersion) { await loadSummary() }
         .confirmationDialog("¿Cerrar sesión en este iPhone?", isPresented: $confirmSignOut, titleVisibility: .visible) {
@@ -71,14 +88,17 @@ struct AccountView: View {
         }
     }
 
-    private func row(_ route: AccountRoute, icon: String, title: String, value: String?) -> some View {
+    private func row(_ route: AccountRoute, icon: String, tint: Color, title: String, value: String?) -> some View {
         NavigationLink(value: route) {
-            HStack(spacing: 12) {
-                IconTile(systemName: icon, size: 30)
-                Text(title)
-                Spacer()
+            LabeledContent {
                 if let value {
-                    Text(value).font(.subheadline).foregroundStyle(.secondary)
+                    Text(value)
+                }
+            } label: {
+                Label {
+                    Text(title)
+                } icon: {
+                    SettingsIcon(systemName: icon, tint: tint)
                 }
             }
         }

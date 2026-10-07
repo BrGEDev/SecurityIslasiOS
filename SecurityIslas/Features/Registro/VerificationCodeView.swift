@@ -57,6 +57,7 @@ struct VerificationCodeView: View {
             .padding()
         }
         .background(Color(.systemGroupedBackground))
+        .readableContentWidth()
         .onboardingStep(2)
         .onAppear { model.errorMessage = nil }
     }

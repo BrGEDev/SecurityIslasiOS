@@ -84,6 +84,7 @@ struct VisitsView: View {
                     }
                 }
                 .pickerStyle(.segmented)
+                .sensoryFeedback(.selection, trigger: router.visitsSegment)
                 .listRowInsets(EdgeInsets())
                 .listRowBackground(Color.clear)
             }
@@ -103,6 +104,7 @@ struct VisitsView: View {
                 }
             }
         }
+        .readableContentWidth()
         .navigationTitle("Visitas")
         .toolbar {
             ToolbarItem(placement: .primaryAction) {
@@ -166,20 +168,55 @@ struct VisitsView: View {
                     .onTapGesture {
                         if visit.status == .waiting { pendingDecision = visit }
                     }
+                    .swipeActions(edge: .leading) {
+                        if visit.status == .waiting {
+                            Button {
+                                Task { await model.decide(visit, .authorize) }
+                            } label: {
+                                Label("Autorizar", systemImage: "checkmark")
+                            }
+                            .tint(.green)
+                        }
+                    }
                     .swipeActions(edge: .trailing) {
                         if visit.status == .waiting {
-                            Button("Autorizar") { Task { await model.decide(visit, .authorize) } }
-                                .tint(.green)
-                            Button("Rechazar") { Task { await model.decide(visit, .reject) } }
-                                .tint(.red)
+                            Button(role: .destructive) {
+                                Task { await model.decide(visit, .reject) }
+                            } label: {
+                                Label("Rechazar", systemImage: "xmark")
+                            }
                         } else if visit.status == .entered || visit.status == .authorized {
-                            Button("Se queda a dormir") { Task { await model.markSleepover(visit) } }
-                                .tint(.indigo)
+                            Button {
+                                Task { await model.markSleepover(visit) }
+                            } label: {
+                                Label("Se queda a dormir", systemImage: "moon.zzz.fill")
+                            }
+                            .tint(.indigo)
+                        }
+                    }
+                    .contextMenu {
+                        if visit.status == .waiting {
+                            Button {
+                                Task { await model.decide(visit, .authorize) }
+                            } label: {
+                                Label("Autorizar", systemImage: "checkmark.circle")
+                            }
+                            Button(role: .destructive) {
+                                Task { await model.decide(visit, .reject) }
+                            } label: {
+                                Label("Rechazar", systemImage: "xmark.circle")
+                            }
+                        } else if visit.status == .entered || visit.status == .authorized {
+                            Button {
+                                Task { await model.markSleepover(visit) }
+                            } label: {
+                                Label("Se queda a dormir", systemImage: "moon.zzz")
+                            }
                         }
                     }
             }
         } footer: {
-            Text("Desliza una visita que sigue adentro para marcar que se queda a dormir.")
+            Text("Desliza a la izquierda una visita que sigue adentro para marcar que se queda a dormir.")
         }
     }
 

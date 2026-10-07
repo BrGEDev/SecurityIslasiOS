@@ -59,6 +59,7 @@ struct PhoneNumberView: View {
             .padding()
         }
         .background(Color(.systemGroupedBackground))
+        .readableContentWidth()
         .onboardingStep(1)
         .safeAreaInset(edge: .bottom) {
             BottomActionBar {

@@ -83,7 +83,25 @@ struct OnboardingStep: ViewModifier {
     }
 }
 
+/// `navigationSubtitle` existe desde iOS 26; antes no hace nada y la vista
+/// muestra el subtítulo en su contenido.
+struct NavigationSubtitleCompat: ViewModifier {
+    let text: String
+
+    func body(content: Content) -> some View {
+        if #available(iOS 26, *) {
+            content.navigationSubtitle(text)
+        } else {
+            content
+        }
+    }
+}
+
 extension View {
+    func navigationSubtitleCompat(_ text: String) -> some View {
+        modifier(NavigationSubtitleCompat(text: text))
+    }
+
     func onboardingStep(_ step: Int, of total: Int = 4) -> some View {
         modifier(OnboardingStep(step: step, total: total))
     }
@@ -153,8 +171,9 @@ extension View {
     }
 
     /// Tarjeta blanca agrupada (fuera de List).
-    func cardBackground(cornerRadius: CGFloat = 16) -> some View {
-        background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: cornerRadius))
+    /// Esquinas continuas (la curva "squircle" de iOS) y el fondo agrupado del sistema.
+    func cardBackground(cornerRadius: CGFloat = 20) -> some View {
+        background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: cornerRadius, style: .continuous))
     }
 }
 

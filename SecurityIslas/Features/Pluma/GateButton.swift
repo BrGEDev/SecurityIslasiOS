@@ -57,7 +57,7 @@ struct GateButton: View {
             Task { await model.trigger() }
         } label: {
             HStack(spacing: 16) {
-                Image(systemName: isShared ? "bell" : "road.lanes")
+                Image(systemName: isShared ? "bell.fill" : "road.lanes")
                     .font(.title2.weight(.semibold))
                     .frame(width: 56, height: 56)
                     .background(.white.opacity(0.18), in: .rect(cornerRadius: 16))
@@ -79,7 +79,7 @@ struct GateButton: View {
             .foregroundStyle(.white)
             .padding(16)
             .frame(maxWidth: .infinity, alignment: .leading)
-            .background(LinearGradient(colors: colors, startPoint: .topLeading, endPoint: .bottomTrailing), in: .rect(cornerRadius: 20))
+            .background(LinearGradient(colors: colors, startPoint: .topLeading, endPoint: .bottomTrailing), in: .rect(cornerRadius: 22, style: .continuous))
         }
         .buttonStyle(.plain)
         .accessibilityHint(isShared ? "Manda una solicitud al guardia. Pide Face ID." : "Abre la pluma. Pide Face ID.")
@@ -100,7 +100,7 @@ struct GateButton: View {
             Spacer(minLength: 0)
         }
         .padding(16)
-        .background(Color(.systemGray6), in: .rect(cornerRadius: 20))
+        .background(Color(.secondarySystemGroupedBackground), in: .rect(cornerRadius: 22, style: .continuous))
         .accessibilityElement(children: .combine)
     }
 
@@ -111,6 +111,7 @@ struct GateButton: View {
                     Image(systemName: icon)
                         .font(.body.weight(.bold))
                         .foregroundStyle(tint)
+                        .symbolEffect(.bounce, value: title)
                 } else {
                     ProgressView()
                 }

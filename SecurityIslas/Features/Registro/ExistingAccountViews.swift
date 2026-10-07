@@ -60,6 +60,7 @@ struct ExistingAccountView: View {
             }
             .padding()
         }
+        .readableContentWidth()
         .background(Color(.systemGroupedBackground))
         .safeAreaInset(edge: .bottom) {
             BottomActionBar {
@@ -119,6 +120,7 @@ struct DeviceLimitView: View {
                 Section { InlineError(message: error) }
             }
         }
+        .readableContentWidth()
         .safeAreaInset(edge: .bottom) {
             BottomActionBar {
                 AsyncButton("Quitar y continuar") {

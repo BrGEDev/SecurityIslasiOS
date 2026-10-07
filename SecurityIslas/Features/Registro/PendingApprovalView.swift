@@ -59,6 +59,7 @@ struct PendingApprovalView: View {
                         .padding(.top, 6)
                 }
             }
+            .readableContentWidth()
             .refreshable { try? await session.refreshProfile() }
             .safeAreaInset(edge: .bottom) {
                 BottomActionBar {

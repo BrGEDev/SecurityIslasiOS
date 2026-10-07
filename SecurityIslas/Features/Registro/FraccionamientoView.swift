@@ -80,6 +80,7 @@ struct FraccionamientoView: View {
                 Section { InlineError(message: error) }
             }
         }
+        .readableContentWidth()
         .onboardingStep(3)
         .task(id: model.searchText) {
             await model.search()

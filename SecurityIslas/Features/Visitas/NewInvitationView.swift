@@ -196,6 +196,7 @@ struct InvitationPreviewView: View {
             }
             .padding()
         }
+        .readableContentWidth()
         .navigationTitle("Vista previa")
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {

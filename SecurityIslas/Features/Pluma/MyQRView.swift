@@ -62,6 +62,7 @@ struct MyQRView: View {
             .padding()
         }
         .background(Color(.systemGroupedBackground))
+        .readableContentWidth()
         .navigationTitle("Mi QR")
         .task { await loadSeed() }
         .onAppear(perform: raiseBrightness)

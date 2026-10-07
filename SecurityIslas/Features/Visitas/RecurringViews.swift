@@ -194,6 +194,7 @@ struct RecurringDetailView: View {
                     .foregroundStyle(.red)
             }
         }
+        .readableContentWidth()
         .navigationBarTitleDisplayMode(.inline)
         .task {
             if let fresh = try? await repository.recurringDetail(id: recurring.id) {
@@ -253,6 +254,7 @@ struct PackagePolicyView: View {
                     .padding(.top, 6)
             }
         }
+        .readableContentWidth()
         .navigationTitle("Paquetería")
         .navigationBarTitleDisplayMode(.inline)
         .disabled(saving != nil)
