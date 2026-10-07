@@ -14,14 +14,10 @@ struct HomeRegistrationView: View {
 
     var body: some View {
         Form {
-            Section {
-                OnboardingHeader(
-                    title: model.isPreloaded ? "Confirma tus datos" : "Tu vivienda",
-                    subtitle: model.selectedFraccionamiento?.name
-                )
-                .listRowInsets(EdgeInsets())
-                .listRowBackground(Color.clear)
-            }
+            ListHeaderSection(
+                title: model.isPreloaded ? "Confirma tus datos" : "Tu vivienda",
+                subtitle: model.selectedFraccionamiento?.name
+            )
 
             Section("Nombre") {
                 TextField("Nombre", text: $model.firstName)

@@ -233,11 +233,7 @@ struct PackagePolicyView: View {
 
     var body: some View {
         List {
-            Section {
-                OnboardingHeader(title: "Cuando llegue un paquete", subtitle: "Siempre te avisamos, elijas lo que elijas.")
-                    .listRowInsets(EdgeInsets())
-                    .listRowBackground(Color.clear)
-            }
+            ListHeaderSection(title: "Cuando llegue un paquete", subtitle: "Siempre te avisamos, elijas lo que elijas.")
 
             Section {
                 ForEach(PackagePolicy.allCases) { option in

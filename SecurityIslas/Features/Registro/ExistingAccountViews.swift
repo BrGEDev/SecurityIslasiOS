@@ -91,14 +91,10 @@ struct DeviceLimitView: View {
 
     var body: some View {
         List {
-            Section {
-                OnboardingHeader(
-                    title: "Ya tienes 3 dispositivos",
-                    subtitle: "Para usar este iPhone, quita uno. Dejará de abrir la pluma y de recibir avisos."
-                )
-                .listRowInsets(EdgeInsets())
-                .listRowBackground(Color.clear)
-            }
+            ListHeaderSection(
+                title: "Ya tienes 3 dispositivos",
+                subtitle: "Para usar este iPhone, quita uno. Dejará de abrir la pluma y de recibir avisos."
+            )
 
             Section {
                 ForEach(model.verification?.devices ?? []) { device in

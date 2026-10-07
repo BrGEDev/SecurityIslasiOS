@@ -14,29 +14,26 @@ struct FraccionamientoView: View {
 
     var body: some View {
         List {
-            Section {
-                VStack(alignment: .leading, spacing: 16) {
-                    OnboardingHeader(title: "¿Dónde vives?", subtitle: "Busca tu fraccionamiento o condominio.")
-                    SearchField(
-                        "Bosques Sanctorum, Paseos del Ángel…",
-                        text: $model.searchText,
-                        backgroundColor: Color(.tertiarySystemFill),
-                        leadingIcon: { Image(systemName: "magnifyingglass") },
-                        trailingIcon: {
-                            if !model.searchText.isEmpty {
-                                Button {
-                                    model.searchText = ""
-                                } label: {
-                                    Image(systemName: "xmark.circle.fill").foregroundStyle(.secondary)
-                                }
-                                .buttonStyle(.plain)
-                                .accessibilityLabel("Borrar búsqueda")
+            ListHeaderSection(title: "¿Dónde vives?", subtitle: "Busca tu fraccionamiento o condominio.") {
+                SearchField(
+                    "Bosques Sanctorum, Paseos del Ángel…",
+                    text: $model.searchText,
+                    backgroundColor: Color(.tertiarySystemFill),
+                    leadingIcon: { Image(systemName: "magnifyingglass") },
+                    trailingIcon: {
+                        if !model.searchText.isEmpty {
+                            Button {
+                                model.searchText = ""
+                            } label: {
+                                Image(systemName: "xmark.circle.fill").foregroundStyle(.secondary)
                             }
+                            .buttonStyle(.plain)
+                            .accessibilityLabel("Borrar búsqueda")
                         }
-                    )
-                }
-                .listRowInsets(EdgeInsets())
-                .listRowBackground(Color.clear)
+                    }
+                )
+                .font(.body)
+                .foregroundStyle(.primary)
             }
 
             Section {

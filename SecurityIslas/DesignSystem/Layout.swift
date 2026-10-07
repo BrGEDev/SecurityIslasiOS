@@ -17,6 +17,7 @@ struct OnboardingHeader: View {
         VStack(alignment: .leading, spacing: 6) {
             Text(title)
                 .font(.largeTitle.bold())
+                .foregroundStyle(.primary)
                 .fixedSize(horizontal: false, vertical: true)
             if let subtitle {
                 Text(subtitle)
@@ -27,6 +28,32 @@ struct OnboardingHeader: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .accessibilityElement(children: .combine)
         .accessibilityAddTraits(.isHeader)
+    }
+}
+
+/// Encabezado grande dentro de un List/Form. Va como header de una sección
+/// vacía para respetar los márgenes de la lista (no como fila sin insets).
+struct ListHeaderSection<Accessory: View>: View {
+    let title: String
+    var subtitle: String?
+    let accessory: Accessory
+
+    init(title: String, subtitle: String? = nil, @ViewBuilder accessory: () -> Accessory = { EmptyView() }) {
+        self.title = title
+        self.subtitle = subtitle
+        self.accessory = accessory()
+    }
+
+    var body: some View {
+        Section {} header: {
+            VStack(alignment: .leading, spacing: 16) {
+                OnboardingHeader(title: title, subtitle: subtitle)
+                accessory
+            }
+            .textCase(nil)
+            .padding(.top)
+        }
+        .headerProminence(.increased)
     }
 }
 
