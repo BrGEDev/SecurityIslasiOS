@@ -81,8 +81,6 @@ struct NewRecurringView: View {
                     .pickerStyle(.segmented)
                 } header: {
                     Text("Código")
-                } footer: {
-                    Label("Al guardar te pediremos Face ID.", systemImage: "faceid")
                 }
             }
             .navigationTitle("Nuevo recurrente")
@@ -208,7 +206,7 @@ struct RecurringDetailView: View {
             Section {
                 Button("Revocar código", role: .destructive) { confirmRevoke = true }
             } footer: {
-                Text("Deja de funcionar de inmediato en las casetas con conexión. Te pediremos \(BiometricAuthenticator().biometryName).")
+                Text("Deja de funcionar de inmediato en las casetas con conexión.")
             }
         }
         .readableContentWidth()
@@ -221,7 +219,7 @@ struct RecurringDetailView: View {
         .confirmationDialog("¿Revocar el código de \(recurring.name)?", isPresented: $confirmRevoke, titleVisibility: .visible) {
             Button("Revocar", role: .destructive) { Task { await revoke() } }
         } message: {
-            Text("Aplica de inmediato en las casetas con conexión. Te pediremos Face ID.")
+            Text("Aplica de inmediato en las casetas con conexión.")
         }
         .errorAlert($errorMessage)
     }
@@ -266,9 +264,6 @@ struct PackagePolicyView: View {
                     .buttonStyle(.plain)
                     .listRowBackground(policy == option ? Color.accentColor.opacity(0.08) : nil)
                 }
-            } footer: {
-                Label("Cambiar esta opción pide Face ID.", systemImage: "faceid")
-                    .padding(.top, 6)
             }
         }
         .readableContentWidth()

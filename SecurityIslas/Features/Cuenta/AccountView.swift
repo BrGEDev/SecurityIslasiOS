@@ -48,8 +48,6 @@ struct AccountView: View {
                 }
                 row(.contacts, icon: "heart.fill", tint: .pink, title: "Contactos de emergencia", value: summary.contacts)
                 row(.devices, icon: "iphone", tint: .gray, title: "Dispositivos", value: summary.devices)
-            } footer: {
-                Text("Los cambios en esta sección piden \(container.biometrics.biometryName).")
             }
 
             if profile.canManageHousehold {

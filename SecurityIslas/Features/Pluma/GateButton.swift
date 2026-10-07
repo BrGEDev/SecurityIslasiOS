@@ -165,7 +165,7 @@ private struct Appearance {
                       symbol: "location.slash", colors: [], accent: .accentColor, isNeutral: true)
         case .ready(let lane, let distance) where lane.type == .residentsOnly:
             self.init(eyebrow: lane.name, title: "Abrir pluma", subtitle: "Carril de residentes",
-                      symbol: "lock.open.fill", footer: ("Abre directo con Face ID", "faceid"),
+                      symbol: "lock.open.fill", footer: ("Abre directo, sin esperar al guardia", "bolt.fill"),
                       badge: GateHeroCard.format(distance), colors: Self.blue, accent: Self.blue[1], isActionable: true)
         case .ready(let lane, let distance):
             self.init(eyebrow: lane.name, title: "Solicitar paso", subtitle: "Carril compartido",

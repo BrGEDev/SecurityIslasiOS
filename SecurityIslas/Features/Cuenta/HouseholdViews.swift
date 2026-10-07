@@ -216,7 +216,7 @@ struct DevicesView: View {
         ) { device in
             Button("Quitar", role: .destructive) { Task { await remove(device) } }
         } message: { _ in
-            Text("Dejará de abrir la pluma y de recibir avisos al instante. Te pediremos Face ID.")
+            Text("Dejará de abrir la pluma y de recibir avisos al instante.")
         }
         .errorAlert($errorMessage)
     }
