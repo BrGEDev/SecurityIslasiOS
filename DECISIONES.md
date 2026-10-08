@@ -160,7 +160,9 @@ Supuestos y decisiones tomadas al construir la app de residentes. Cada punto mar
   solicitar paso. Chico: pánico. Pantalla bloqueada: distancia a la entrada y visitas pendientes.
 - Abrir pluma, pánico y Mi QR abren la app con `islassecurity://gate|panic|qr`: abrir usa el mismo
   botón de Inicio (geocerca, carril y Face ID) y el pánico abre la pantalla de mantener presionado
-  (RF-41). Controles del Centro de control (iOS 18) con `OpenURLIntent` a los mismos enlaces.
+  (RF-41). Controles del Centro de control (iOS 18) con `OpenAppTargetIntent` (`OpenIntent` en
+  `Shared`, miembro de la app y de la extensión, como pide Apple; corre en la app y atiende el mismo
+  `AppLink`). Con `OpenURLIntent` y el esquema propio los botones no hacían nada.
 - Complicaciones del reloj: `islassecurity://gate|panic|qr` abren la página correspondiente.
 
 ## Siri (RF-30 a RF-34)

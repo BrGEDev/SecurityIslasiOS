@@ -203,6 +203,10 @@ final class AppContainer {
             self?.dataDidChange()
         }
         liveActivities.observePushToStartToken()
+        // Controles del Centro de control (OpenAppTargetIntent).
+        AppLinkHandler.open = { [weak self] link in
+            self?.handle(url: link.url)
+        }
         notifications.openHandler = { [weak self] visitId in
             self?.visitToOpen = visitId
         }

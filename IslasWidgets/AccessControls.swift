@@ -4,8 +4,9 @@
 //
 //  Controles del Centro de control y de las esquinas de la pantalla bloqueada
 //  (iOS 18, RF-41, pantalla 31): Abrir pluma, Pánico y Mi QR. Abren la app con
-//  el mismo enlace que los widgets: abrir pide Face ID y el pánico abre la
-//  pantalla de mantener presionado, nunca envía directo.
+//  `OpenAppTargetIntent` (un `OpenIntent` de la app y la extensión; un
+//  `OpenURLIntent` con el esquema propio no abría nada): abrir pide Face ID y
+//  el pánico abre la pantalla de mantener presionado, nunca envía directo.
 //
 
 import AppIntents
@@ -16,7 +17,7 @@ import WidgetKit
 struct GateControl: ControlWidget {
     var body: some ControlWidgetConfiguration {
         StaticControlConfiguration(kind: "app.security.islasgower.control.gate") {
-            ControlWidgetButton(action: OpenURLIntent(AppLink.gate.url)) {
+            ControlWidgetButton(action: OpenAppTargetIntent(.gate)) {
                 Label("Abrir pluma", systemImage: "road.lanes")
             }
         }
@@ -29,7 +30,7 @@ struct GateControl: ControlWidget {
 struct PanicControl: ControlWidget {
     var body: some ControlWidgetConfiguration {
         StaticControlConfiguration(kind: "app.security.islasgower.control.panic") {
-            ControlWidgetButton(action: OpenURLIntent(AppLink.panic.url)) {
+            ControlWidgetButton(action: OpenAppTargetIntent(.panic)) {
                 Label("Pánico", systemImage: "exclamationmark.triangle.fill")
             }
             .tint(.red)
@@ -43,7 +44,7 @@ struct PanicControl: ControlWidget {
 struct MyQRControl: ControlWidget {
     var body: some ControlWidgetConfiguration {
         StaticControlConfiguration(kind: "app.security.islasgower.control.qr") {
-            ControlWidgetButton(action: OpenURLIntent(AppLink.qr.url)) {
+            ControlWidgetButton(action: OpenAppTargetIntent(.qr)) {
                 Label("Mi QR", systemImage: "qrcode")
             }
         }
