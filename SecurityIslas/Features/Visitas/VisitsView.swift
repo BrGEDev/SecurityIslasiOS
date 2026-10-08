@@ -160,6 +160,12 @@ struct VisitsView: View {
     @ViewBuilder
     private var todaySection: some View {
         Section {
+            DismissibleSiriTip(AutorizarVisitaIntent(), key: "authorize")
+                .listRowInsets(EdgeInsets())
+                .listRowBackground(Color.clear)
+        }
+
+        Section {
             if model.today.isEmpty, model.loaded.contains(.today) {
                 Text("No hay accesos hoy.").foregroundStyle(.secondary)
             }

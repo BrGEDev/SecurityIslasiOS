@@ -31,6 +31,9 @@ struct MyQRView: View {
                     infoRow("Subimos el brillo mientras esta pantalla está abierta.", systemImage: "sun.max")
                 }
                 .frame(maxWidth: 380)
+
+                DismissibleSiriTip(MiQRIntent(), key: "qr")
+                    .frame(maxWidth: 380)
             }
             .padding()
             .frame(maxWidth: .infinity)

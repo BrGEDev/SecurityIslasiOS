@@ -73,6 +73,10 @@ struct HomeView: View {
 
                     GateHeroCard(model: model.gate)
 
+                    if profile.canUseGate {
+                        DismissibleSiriTip(AbrirPlumaIntent(), key: "gate")
+                    }
+
                     QuickActionsGrid(items: quickActions)
                         .padding(.top, 4)
                 } trailing: {

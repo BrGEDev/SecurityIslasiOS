@@ -7,6 +7,7 @@
 //  para el titular o el propietario.
 //
 
+import AppIntents
 import SwiftUI
 
 struct AccountView: View {
@@ -64,6 +65,18 @@ struct AccountView: View {
                     row(.packagePolicy, icon: "shippingbox.fill", tint: .indigo, title: "Cuando llegue un paquete", value: summary.packagePolicy)
                     row(.packages, icon: "tray.full.fill", tint: .teal, title: "Paquetes en caseta", value: nil)
                 }
+            }
+
+            Section {
+                DismissibleSiriTip(PanicoIntent(), key: "panic")
+                    .listRowInsets(EdgeInsets())
+                ShortcutsLink()
+                    .frame(maxWidth: .infinity)
+                    .listRowBackground(Color.clear)
+            } header: {
+                Text("Siri y Atajos")
+            } footer: {
+                Text("También puedes asignar Abrir pluma o Pánico al botón de Acción en Configuración.")
             }
 
             if container.usesMockBackend {

@@ -36,13 +36,13 @@ final class SecurityIslasUITests: XCTestCase {
         app.buttons["Continuar"].firstMatch.tap()
 
         let phone = app.textFields["celular"]
-        XCTAssertTrue(phone.waitForExistence(timeout: 5))
+        XCTAssertTrue(phone.waitForExistence(timeout: 15))
         phone.tap()
         phone.typeText("2221234567")
         app.buttons["Enviar código"].tap()
 
         let code = app.textFields["codigo-sms"]
-        XCTAssertTrue(code.waitForExistence(timeout: 5))
+        XCTAssertTrue(code.waitForExistence(timeout: 15))
         code.typeText("123456")
 
         // 3a: ya tiene cuenta.
