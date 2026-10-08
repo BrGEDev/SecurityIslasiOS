@@ -55,10 +55,14 @@ final class VisitActivityController {
         guard ActivityAuthorizationInfo().areActivitiesEnabled else { return }
         let pendingIds = Set(pending.map(\.id))
 
-        // Las que ya no están pendientes se cierran (otro respondió o expiró).
-        for activity in Activity<VisitActivityAttributes>.activities
-        where !pendingIds.contains(activity.attributes.visitId) && activity.content.state.phase == .waiting {
-            end(visitId: activity.attributes.visitId, phase: .noResponse, respondedBy: nil, dismissImmediately: true)
+        // Las que ya no están pendientes y nadie cerró (expiró o respondieron
+        // en otro lado sin push) se quitan.
+        let stale = Activity<VisitActivityAttributes>.activities.filter {
+            !pendingIds.contains($0.attributes.visitId) && $0.content.state.phase == .waiting
+        }
+        for activity in stale {
+            let visitId = activity.attributes.visitId
+            Task { await end(visitId: visitId, phase: .noResponse, respondedBy: nil, dismissImmediately: true) }
         }
 
         let running = Set(Activity<VisitActivityAttributes>.activities.map(\.attributes.visitId))
@@ -72,6 +76,7 @@ final class VisitActivityController {
               let respondBy = visit.responseDeadline, respondBy > .now else { return }
         let attributes = VisitActivityAttributes(
             visitId: visit.id,
+            arrivedAt: visit.arrivedAt ?? respondBy.addingTimeInterval(-Visit.responseWindow),
             name: visit.name,
             initials: visit.initials,
             kind: visit.kind,
@@ -91,20 +96,39 @@ final class VisitActivityController {
         }
     }
 
-    /// Respuesta conocida (en la app, desde el aviso, Siri u otro integrante).
-    func end(visitId: String, phase: VisitActivityAttributes.ContentState.Phase, respondedBy: String?, dismissImmediately: Bool = false) {
+    /// Al tocar Autorizar / Rechazar: quita los botones de inmediato.
+    func showResponding(visitId: String, decision: VisitDecision) async {
+        await update(visitId: visitId) { state in
+            state.phase = decision == .authorize ? .authorizing : .rejecting
+        }
+    }
+
+    /// No se pudo enviar (sin red): vuelven los botones para reintentar.
+    func restoreWaiting(visitId: String) async {
+        await update(visitId: visitId) { state in
+            state.phase = .waiting
+        }
+    }
+
+    /// Respuesta conocida (aquí, desde el aviso, Siri u otro integrante). Se
+    /// espera a que termine: si no, la app puede suspenderse antes de cerrar
+    /// la actividad y la isla se queda con los botones.
+    func end(
+        visitId: String,
+        phase: VisitActivityAttributes.ContentState.Phase,
+        respondedBy: String?,
+        dismissImmediately: Bool = false
+    ) async {
         tokenTasks[visitId]?.cancel()
         tokenTasks[visitId] = nil
-        let policy: ActivityUIDismissalPolicy = dismissImmediately ? .immediate : .after(.now.addingTimeInterval(8))
-        Task {
-            for activity in Activity<VisitActivityAttributes>.activities where activity.attributes.visitId == visitId {
-                let state = VisitActivityAttributes.ContentState(
-                    phase: phase,
-                    respondBy: activity.content.state.respondBy,
-                    respondedBy: respondedBy
-                )
-                await activity.end(ActivityContent(state: state, staleDate: nil), dismissalPolicy: policy)
-            }
+        let policy: ActivityUIDismissalPolicy = dismissImmediately ? .immediate : .after(.now.addingTimeInterval(4))
+        for activity in Activity<VisitActivityAttributes>.activities where activity.attributes.visitId == visitId {
+            let state = VisitActivityAttributes.ContentState(
+                phase: phase,
+                respondBy: activity.content.state.respondBy,
+                respondedBy: respondedBy
+            )
+            await activity.end(ActivityContent(state: state, staleDate: nil), dismissalPolicy: policy)
         }
     }
 
@@ -116,6 +140,15 @@ final class VisitActivityController {
         }
         tokenTasks.values.forEach { $0.cancel() }
         tokenTasks = [:]
+    }
+
+    private func update(visitId: String, _ change: (inout VisitActivityAttributes.ContentState) -> Void) async {
+        for activity in Activity<VisitActivityAttributes>.activities where activity.attributes.visitId == visitId {
+            var state = activity.content.state
+            guard !state.phase.isFinal else { continue }
+            change(&state)
+            await activity.update(ActivityContent(state: state, staleDate: state.phase == .waiting ? state.respondBy : nil))
+        }
     }
 
     private func observeToken(of activity: Activity<VisitActivityAttributes>) {

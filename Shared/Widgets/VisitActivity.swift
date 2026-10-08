@@ -22,20 +22,28 @@ nonisolated struct VisitActivityAttributes: ActivityAttributes {
     nonisolated struct ContentState: Codable, Hashable, Sendable {
         nonisolated enum Phase: String, Codable, Sendable {
             case waiting
+            /// Ya tocó un botón y la respuesta va en camino: los botones
+            /// desaparecen al instante para que no se envíe dos veces.
+            case authorizing
+            case rejecting
             case authorized
             case rejected
             /// Pasó el tiempo y nadie respondió: no entra (RF-04).
             case noResponse
+
+            var isFinal: Bool { self == .authorized || self == .rejected || self == .noResponse }
         }
 
         var phase: Phase
         /// Fin de la cuenta regresiva antes de escalar a WhatsApp y llamada.
         var respondBy: Date
-        /// Quién de la casa respondió (RF-06).
+        /// Quién de la casa respondió (RF-06). `nil` = respondió este iPhone.
         var respondedBy: String?
     }
 
     let visitId: String
+    /// Inicio de la cuenta regresiva (para el anillo de progreso).
+    let arrivedAt: Date
     let name: String
     let initials: String
     let kind: AccessKind
@@ -49,7 +57,9 @@ nonisolated struct VisitActivityAttributes: ActivityAttributes {
 /// pero `LiveActivityIntent` siempre corre en el de la app.
 @MainActor
 enum VisitDecisionHandler {
-    static var decide: ((String, VisitDecision) async throws -> Void)?
+    /// Debe esperar a que la actividad muestre el resultado: al terminar
+    /// `perform()` el sistema puede suspender la app.
+    static var decide: ((String, VisitDecision) async -> Void)?
 }
 
 nonisolated enum VisitDecisionOption: String, AppEnum {
@@ -92,7 +102,7 @@ struct VisitDecisionIntent: LiveActivityIntent {
 
     @MainActor
     func perform() async throws -> some IntentResult {
-        try await VisitDecisionHandler.decide?(visitId, option.decision)
+        await VisitDecisionHandler.decide?(visitId, option.decision)
         return .result()
     }
 }
@@ -114,7 +124,7 @@ struct AuthorizeVisitFromLockScreenIntent: LiveActivityIntent {
 
     @MainActor
     func perform() async throws -> some IntentResult {
-        try await VisitDecisionHandler.decide?(visitId, .authorize)
+        await VisitDecisionHandler.decide?(visitId, .authorize)
         return .result()
     }
 }

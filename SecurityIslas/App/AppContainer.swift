@@ -173,34 +173,24 @@ final class AppContainer {
             self?.dataDidChange()
         }
         watch.activate()
+        // Botones del aviso, de la Live Activity y del widget: mismo camino.
         notifications.decisionHandler = { [weak self] visitId, decision in
-            do {
-                _ = try await visits.decide(visitId, decision: decision)
-            } catch {
-                // Ej. ya se respondió en la app o lo hizo otro integrante (409):
-                // se avisa en lugar de fallar en silencio.
-                self?.notifications.notify(title: "No se aplicó tu respuesta", body: error.userMessage ?? "Ocurrió un error inesperado")
-            }
-            self?.dataDidChange()
+            await self?.respondOutsideApp(visitId, decision)
         }
+        VisitDecisionHandler.decide = { [weak self] visitId, decision in
+            await self?.respondOutsideApp(visitId, decision)
+        }
+        // Respuestas dentro de la app (Inicio, Visitas, Siri): cierran la
+        // actividad y el aviso de esa visita.
         visits.onDecision = { [weak self] visit, decision in
             NotificationManager.withdraw(visitId: visit.id)
-            self?.liveActivities.end(
-                visitId: visit.id,
-                phase: decision == .authorize ? .authorized : .rejected,
-                respondedBy: visit.respondedBy
-            )
-        }
-        // Botones de la Live Activity y del widget: corren en este proceso.
-        VisitDecisionHandler.decide = { [weak self] visitId, decision in
-            do {
-                _ = try await visits.decide(visitId, decision: decision)
-            } catch {
-                // Ya respondió otro (409) o falló la red: se avisa y se cierra.
-                self?.liveActivities.end(visitId: visitId, phase: .noResponse, respondedBy: nil, dismissImmediately: true)
-                self?.notifications.notify(title: "No se aplicó tu respuesta", body: error.userMessage ?? "Ocurrió un error inesperado")
+            Task {
+                await self?.liveActivities.end(
+                    visitId: visit.id,
+                    phase: decision == .authorize ? .authorized : .rejected,
+                    respondedBy: nil
+                )
             }
-            self?.dataDidChange()
         }
         liveActivities.observePushToStartToken()
         // Controles del Centro de control (OpenAppTargetIntent).
@@ -216,6 +206,43 @@ final class AppContainer {
     }
 
     var usesMockBackend: Bool { mockServer != nil }
+
+    /// Visitas con una respuesta en camino: un segundo toque (o el mismo botón
+    /// en el aviso y en la isla) no vuelve a enviarla.
+    @ObservationIgnored private var respondingVisitIds: Set<String> = []
+
+    /// Autorizar / Rechazar desde la Live Activity, el widget o el aviso.
+    /// 1. Quita los botones de la actividad al instante ("Autorizando…").
+    /// 2. Envía la respuesta una sola vez.
+    /// 3. Muestra el resultado y cierra la actividad a los pocos segundos.
+    /// Si otro integrante ya respondió (409), la actividad dice quién, sin
+    /// mandar avisos extra. Si falla la red, vuelven los botones y se avisa.
+    /// Todo se espera antes de regresar: el sistema puede suspender la app en
+    /// cuanto termina el intent.
+    func respondOutsideApp(_ visitId: String, _ decision: VisitDecision) async {
+        guard respondingVisitIds.insert(visitId).inserted else { return }
+        defer { respondingVisitIds.remove(visitId) }
+
+        await liveActivities.showResponding(visitId: visitId, decision: decision)
+        do {
+            _ = try await visits.decide(visitId, decision: decision)
+            NotificationManager.withdraw(visitId: visitId)
+            await liveActivities.end(visitId: visitId, phase: decision == .authorize ? .authorized : .rejected, respondedBy: nil)
+        } catch let error as APIError where error.serverCode == "ALREADY_RESPONDED" {
+            NotificationManager.withdraw(visitId: visitId)
+            let visit = try? await visits.today().first { $0.id == visitId }
+            let phase: VisitActivityAttributes.ContentState.Phase = switch visit?.status {
+            case .rejected: .rejected
+            case .noResponse, .expired, .canceled: .noResponse
+            default: .authorized
+            }
+            await liveActivities.end(visitId: visitId, phase: phase, respondedBy: visit?.respondedBy ?? "Otro integrante")
+        } catch {
+            await liveActivities.restoreWaiting(visitId: visitId)
+            notifications.notify(title: "No se envió tu respuesta", body: error.userMessage ?? "Inténtalo de nuevo.")
+        }
+        dataDidChange()
+    }
 
     func dataDidChange() {
         dataVersion += 1
@@ -233,11 +260,9 @@ final class AppContainer {
             // Otro integrante respondió primero (RF-06): el aviso ya no sirve
             // y se avisa quién respondió.
             NotificationManager.withdraw(visitId: visitId)
-            liveActivities.end(
-                visitId: visitId,
-                phase: decision == .authorize ? .authorized : decision == .reject ? .rejected : .noResponse,
-                respondedBy: respondedBy
-            )
+            let phase: VisitActivityAttributes.ContentState.Phase =
+                decision == .authorize ? .authorized : decision == .reject ? .rejected : .noResponse
+            Task { await liveActivities.end(visitId: visitId, phase: phase, respondedBy: respondedBy) }
             if let respondedBy, let decision {
                 let verb = decision == .authorize ? "autorizó" : "rechazó"
                 notifications.notify(

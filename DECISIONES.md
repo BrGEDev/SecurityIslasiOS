@@ -153,6 +153,11 @@ Supuestos y decisiones tomadas al construir la app de residentes. Cada punto mar
 - Cuenta regresiva hasta `respondBy` (si el backend no lo manda, llegada + 60 s). Al vencer queda
   "obsoleta" y dice que se está escalando; al cerrarse sin respuesta dice "Sin respuesta · no entró".
   Nunca se autoriza sola (RF-04).
+- Al tocar un botón la actividad cambia al instante a "Autorizando…/Rechazando…" (sin botones), la
+  respuesta se envía **una sola vez** (`AppContainer.respondOutsideApp`, también para el aviso) y la
+  actividad muestra el resultado ("Autorizaste a…", "Ana rechazó a…") y se cierra a los 4 s. Todo se
+  espera dentro del intent: si no, iOS suspende la app antes de cerrar la actividad. Si otro ya
+  respondió (409) la actividad dice quién, sin mandar avisos; si falla la red vuelven los botones.
 - Botones: Rechazar (`VisitDecisionIntent`, funciona bloqueado) y Autorizar
   (`AuthorizeVisitFromLockScreenIntent`, `.requiresAuthentication`, RF-02). Son `LiveActivityIntent`:
   corren en el proceso de la app y llaman al mismo repositorio.
