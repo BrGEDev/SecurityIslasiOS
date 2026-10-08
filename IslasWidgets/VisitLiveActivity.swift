@@ -28,11 +28,18 @@ struct VisitLiveActivity: Widget {
             DynamicIsland {
                 DynamicIslandExpandedRegion(.leading) {
                     InitialsBadge(attributes: context.attributes, size: 40)
+                        .frame(maxHeight: .infinity, alignment: .center)
                 }
                 DynamicIslandExpandedRegion(.trailing) {
+                    // `Text(timerInterval:)` ocupa todo el ancho que le den: con un
+                    // ancho fijo y una sola línea no se parte en "0:1 / 4".
                     CountdownText(state: context.state, isStale: context.isStale)
                         .font(.title3.weight(.semibold))
                         .foregroundStyle(.orange)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.7)
+                        .frame(width: 64, alignment: .trailing)
+                        .frame(maxHeight: .infinity, alignment: .center)
                 }
                 DynamicIslandExpandedRegion(.center) {
                     VStack(alignment: .leading, spacing: 2) {
@@ -55,7 +62,9 @@ struct VisitLiveActivity: Widget {
                 CountdownText(state: context.state, isStale: context.isStale)
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(.orange)
-                    .frame(maxWidth: 44)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
+                    .frame(width: 40, alignment: .trailing)
             } minimal: {
                 Text(context.attributes.initials)
                     .font(.caption2.weight(.bold))
@@ -80,7 +89,9 @@ private struct VisitLockScreenView: View {
                     HStack(spacing: 4) {
                         if !context.isStale { Text("Responde en") }
                         CountdownText(state: context.state, isStale: context.isStale)
+                            .frame(width: 40, alignment: .trailing)
                     }
+                    .lineLimit(1)
                     .font(.caption.weight(.semibold))
                     .foregroundStyle(.orange)
                 }
@@ -195,4 +206,13 @@ private struct InitialsBadge: View {
 } contentStates: {
     VisitActivityAttributes.ContentState(phase: .waiting, respondBy: .now.addingTimeInterval(48), respondedBy: nil)
     VisitActivityAttributes.ContentState(phase: .authorized, respondBy: .now, respondedBy: "Ana")
+}
+
+#Preview("Dynamic Island", as: .dynamicIsland(.expanded), using: VisitActivityAttributes(
+    visitId: "vis-juan", name: "Juan Pérez", initials: "JP", kind: .visit,
+    detail: "Sin invitación · placa TXR-12-34", residence: "Retorno Encino 24", heldByAdministration: false
+)) {
+    VisitLiveActivity()
+} contentStates: {
+    VisitActivityAttributes.ContentState(phase: .waiting, respondBy: .now.addingTimeInterval(14), respondedBy: nil)
 }
