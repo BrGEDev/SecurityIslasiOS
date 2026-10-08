@@ -108,6 +108,12 @@ Supuestos y decisiones tomadas al construir la app de residentes. Cada punto mar
 ## Pánico
 
 - Mantener 3 s → cuenta regresiva de 5 s cancelable → alerta.
+- **Decidido (Brandon):** widget, control, botón de Acción, Siri y complicación del reloj **no**
+  piden mantener presionado: un toque inicia directo la cuenta regresiva cancelable (RF-41, que
+  prevalece sobre la nota de la maqueta 24). En una emergencia no debe haber pasos de más. La
+  pantalla de mantener presionado queda para VoiceOver y el botón de pánico dentro de la app del
+  reloj.
+- La cuenta regresiva arranca de inmediato; la ubicación se obtiene mientras corre.
 - **(supuesto)** El backend decide el destino con la ubicación enviada (guardias dentro del perímetro,
   contactos fuera); la app lo anticipa con la misma geocerca.
 - **(supuesto)** Estado cada 3 s y ubicación cada 10 s mientras la alerta siga abierta.
@@ -159,7 +165,7 @@ Supuestos y decisiones tomadas al construir la app de residentes. Cada punto mar
 - Mediano: visita en caseta con Rechazar / Autorizar (mismos intents) y botón de abrir pluma o
   solicitar paso. Chico: pánico. Pantalla bloqueada: distancia a la entrada y visitas pendientes.
 - Abrir pluma, pánico y Mi QR abren la app con `islassecurity://gate|panic|qr`: abrir usa el mismo
-  botón de Inicio (geocerca, carril y Face ID) y el pánico abre la pantalla de mantener presionado
+  botón de Inicio (geocerca, carril y Face ID) y el pánico inicia la cuenta regresiva cancelable
   (RF-41). Controles del Centro de control (iOS 18) con `OpenAppTargetIntent` (`OpenIntent` en
   `Shared`, miembro de la app y de la extensión, como pide Apple; corre en la app y atiende el mismo
   `AppLink`). Con `OpenURLIntent` y el esquema propio los botones no hacían nada.
@@ -169,7 +175,7 @@ Supuestos y decisiones tomadas al construir la app de residentes. Cada punto mar
 
 - `AutorizarVisitaIntent` (visitas pendientes como `VisitEntity`; si hay varias pregunta cuál),
   `AbrirPlumaIntent` (mismas reglas de geocerca y carril; abre la app porque firma con Face ID),
-  `PanicoIntent` (abre la pantalla de mantener presionado) y `MiQRIntent`. Todos exigen el iPhone
+  `PanicoIntent` (inicia la cuenta regresiva cancelable) y `MiQRIntent`. Todos exigen el iPhone
   desbloqueado (`.requiresAuthentication`). Frases con el nombre de la app.
 - Los intents usan `AppContainer.shared` (una instancia por proceso) y esperan el arranque de la
   sesión (`SessionStore.activeProfile()`).

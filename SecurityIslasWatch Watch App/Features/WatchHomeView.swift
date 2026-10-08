@@ -66,6 +66,8 @@ final class WatchHomeModel {
 
 nonisolated enum WatchRoute: Hashable {
     case panic
+    /// Desde la complicación: directo a la cuenta regresiva (RF-41).
+    case panicCountdown
     case settings
     case visits
 }
@@ -113,7 +115,9 @@ struct WatchHomeView: View {
             .navigationDestination(for: WatchRoute.self) { route in
                 switch route {
                 case .panic:
-                    WatchPanicView(model: makePanicModel())
+                    WatchPanicView(model: makePanicModel(entry: .hold))
+                case .panicCountdown:
+                    WatchPanicView(model: makePanicModel(entry: .countdown))
                 case .settings:
                     WatchSettingsView(profile: profile)
                 case .visits:
@@ -137,7 +141,7 @@ struct WatchHomeView: View {
             switch link {
             case .panic:
                 path = NavigationPath()
-                path.append(WatchRoute.panic)
+                path.append(WatchRoute.panicCountdown)
             case .gate where profile.canUseGate:
                 path = NavigationPath()
                 page = .gate
@@ -226,9 +230,9 @@ struct WatchHomeView: View {
         perimeterRadius: .greatestFiniteMagnitude
     )
 
-    private func makePanicModel() -> PanicViewModel {
+    private func makePanicModel(entry: PanicEntry) -> PanicViewModel {
         PanicViewModel(
-            entry: .hold,
+            entry: entry,
             repository: container.panic,
             location: container.location,
             gate: model?.summary?.gate ?? Self.unknownGate,

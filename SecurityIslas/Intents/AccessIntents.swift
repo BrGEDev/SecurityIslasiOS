@@ -10,7 +10,7 @@
 //  • Abrir pluma: geocerca de la entrada y tipo de carril (RF-31, RF-23); en
 //    carril compartido manda la solicitud de paso. Pide Face ID igual que en la
 //    app, por eso abre la app.
-//  • Pánico: abre la pantalla de mantener presionado, nunca envía directo (RF-41).
+//  • Pánico: abre la cuenta regresiva cancelable (RF-41); al terminar se envía.
 //
 //  Los nombres de los tipos y los `id` de las entidades son un contrato con los
 //  atajos guardados: no renombrarlos.
@@ -194,7 +194,7 @@ nonisolated struct AbrirPlumaIntent: AppIntent {
 
 nonisolated struct PanicoIntent: AppIntent {
     static let title: LocalizedStringResource = "Pánico"
-    static let description = IntentDescription("Abre la pantalla de pánico. La alerta se envía al mantener presionado, con cuenta regresiva para cancelar.")
+    static let description = IntentDescription("Inicia la cuenta regresiva del pánico. Si no la cancelas, la alerta se envía con tu ubicación.")
     static let authenticationPolicy: IntentAuthenticationPolicy = .requiresAuthentication
     static let openAppWhenRun = true
 
@@ -204,7 +204,7 @@ nonisolated struct PanicoIntent: AppIntent {
     func perform() async throws -> some IntentResult {
         let container = AppContainer.shared
         guard await container.session.activeProfile() != nil else { throw AccessIntentError.signedOut }
-        container.panicRequest = .hold
+        container.panicRequest = .countdown
         return .result()
     }
 }

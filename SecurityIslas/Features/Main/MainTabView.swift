@@ -103,8 +103,8 @@ struct MainTabView: View {
                 container.push.sessionDidChange(userId: profile.id)
             }
             .onChange(of: container.panicRequest, initial: true) { _, entry in
-                // Siri, widget o control: abre la pantalla de mantener presionado
-                // (RF-41); nunca envía la alerta directo.
+                // Siri, widget, control o botón de Acción: cuenta regresiva
+                // cancelable (RF-41), sin tener que mantener presionado.
                 guard let entry else { return }
                 container.panicRequest = nil
                 router.panic = entry

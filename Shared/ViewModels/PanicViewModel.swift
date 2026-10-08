@@ -12,9 +12,13 @@ import Observation
 
 /// Cómo se abre el flujo de pánico.
 nonisolated enum PanicEntry: Hashable, Identifiable {
-    /// Desde widget o control: abre la pantalla de mantener presionado (24).
+    /// Pantalla de mantener presionado (24): solo cuando se abre a propósito
+    /// sin haber mantenido nada (VoiceOver, botón de pánico del reloj).
     case hold
-    /// Ya se mantuvo presionado el botón de Inicio: cuenta regresiva (25).
+    /// Cuenta regresiva cancelable (25): ya se mantuvo presionado el botón de
+    /// Inicio, o se tocó el widget, el control, el botón de Acción o Siri. Ahí
+    /// no se puede mantener presionado y en una emergencia no debe haber pasos
+    /// de más (RF-41).
     case countdown
 
     var id: Self { self }
@@ -74,6 +78,9 @@ final class PanicViewModel {
     }
 
     func prepare() async {
+        // La cuenta regresiva arranca ya; la ubicación se obtiene mientras
+        // corre para no retrasarla en una emergencia.
+        if case .countdown = stage { startCountdown() }
         if let coordinate = try? await location.currentCoordinate() {
             self.coordinate = coordinate
             insidePerimeter = coordinate.distance(to: gate.perimeterCenter) <= gate.perimeterRadius
@@ -81,7 +88,6 @@ final class PanicViewModel {
             // Sin posición precisa: usa el último estado de la geocerca (CLMonitor).
             insidePerimeter = inside
         }
-        if case .countdown = stage { startCountdown() }
     }
 
     func startCountdown() {

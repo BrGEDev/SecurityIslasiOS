@@ -27,7 +27,7 @@ nonisolated enum AppGroup {
 nonisolated enum AppLink: String, Sendable, CaseIterable {
     /// Abrir pluma o solicitar paso (pide Face ID en la app).
     case gate
-    /// Pantalla de mantener presionado (RF-41): nunca envía directo.
+    /// Cuenta regresiva cancelable del pánico (RF-41).
     case panic
     case qr
     case visits

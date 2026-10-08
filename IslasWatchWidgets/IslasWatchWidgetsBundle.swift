@@ -5,7 +5,7 @@
 //  Pantalla 43: complicaciones y Smart Stack del Apple Watch para abrir la
 //  pluma, el pánico y Mi QR (RF-41). Cada una abre la app del reloj en esa
 //  página; abrir sigue las mismas reglas de geocerca y carril (RF-23, RF-68) y
-//  el pánico abre la pantalla de mantener presionado, nunca envía directo.
+//  el pánico inicia la cuenta regresiva cancelable (RF-41).
 //
 //  Los enlaces son los mismos de `AppLink` (Shared): islassecurity://gate,
 //  islassecurity://panic e islassecurity://qr.
@@ -57,7 +57,7 @@ nonisolated enum WatchShortcut: String {
     var description: String {
         switch self {
         case .gate: "Abre la pluma o solicita paso cerca de la entrada."
-        case .panic: "Abre el pánico con cuenta regresiva para cancelar."
+        case .panic: "Inicia la cuenta regresiva del pánico; puedes cancelarla."
         case .qr: "Muestra tu QR de acceso, también sin internet."
         }
     }

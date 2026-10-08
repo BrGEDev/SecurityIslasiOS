@@ -9,7 +9,7 @@
 //
 //  Los datos salen de `WidgetSnapshot` (lo escribe la app). Abrir pluma y
 //  pánico abren la app: abrir pide Face ID igual que en la app y el pánico
-//  abre la pantalla de mantener presionado, nunca envía directo (RF-41).
+//  inicia la cuenta regresiva cancelable (RF-41).
 //
 
 import AppIntents
@@ -163,7 +163,7 @@ struct PanicWidget: Widget {
                 .widgetURL(AppLink.panic.url)
         }
         .configurationDisplayName("Pánico")
-        .description("Abre la pantalla de pánico. La alerta se envía al mantener presionado.")
+        .description("Un toque inicia la cuenta regresiva del pánico; puedes cancelarla.")
         .supportedFamilies([.systemSmall])
     }
 }
@@ -176,14 +176,14 @@ private struct PanicWidgetView: View {
             Spacer()
             Text("Pánico")
                 .font(.headline)
-            Text("Toca para abrir")
+            Text("Toca para enviar")
                 .font(.caption)
                 .opacity(0.8)
         }
         .foregroundStyle(.white)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .leading)
         .accessibilityElement(children: .combine)
-        .accessibilityLabel("Pánico. Abre la pantalla para mantener presionado.")
+        .accessibilityLabel("Pánico. Inicia una cuenta regresiva que puedes cancelar.")
     }
 }
 

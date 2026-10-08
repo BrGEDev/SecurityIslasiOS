@@ -292,7 +292,7 @@ final class AppContainer {
         if let link = AppLink(url: url) {
             switch link {
             case .gate: gateRequest = true
-            case .panic: panicRequest = .hold
+            case .panic: panicRequest = .countdown
             case .qr: tabRequest = .qr
             case .visits: tabRequest = .visits
             }

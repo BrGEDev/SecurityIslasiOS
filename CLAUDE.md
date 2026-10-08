@@ -125,6 +125,9 @@ Marca cada punto al terminarlo y mueve los supuestos a `DECISIONES.md`.
   activar Face ID y se registra una llave nueva.
 - **Menor**: solo abre la pluma (o solicita paso) para su propio paso y usa su QR; no autoriza
   visitas, no invita ni cambia accesos.
+- **Pánico desde atajos**: widget, control, botón de Acción, Siri y complicación inician directo la
+  cuenta regresiva cancelable (sin mantener presionado).
+- **Git**: todo lo trabajado se sube a `main` al terminar cada cambio.
 
 ## Decisiones abiertas (preguntar, no decidir)
 

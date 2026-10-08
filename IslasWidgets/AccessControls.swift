@@ -6,7 +6,7 @@
 //  (iOS 18, RF-41, pantalla 31): Abrir pluma, Pánico y Mi QR. Abren la app con
 //  `OpenAppTargetIntent` (un `OpenIntent` de la app y la extensión; un
 //  `OpenURLIntent` con el esquema propio no abría nada): abrir pide Face ID y
-//  el pánico abre la pantalla de mantener presionado, nunca envía directo.
+//  el pánico inicia la cuenta regresiva cancelable (RF-41).
 //
 
 import AppIntents
@@ -36,7 +36,7 @@ struct PanicControl: ControlWidget {
             .tint(.red)
         }
         .displayName("Pánico")
-        .description("Abre la pantalla de pánico con cuenta regresiva para cancelar.")
+        .description("Inicia la cuenta regresiva del pánico. Puedes cancelarla antes de que se envíe.")
     }
 }
 
