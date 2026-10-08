@@ -45,8 +45,14 @@ struct WatchVisitDetailView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.top, 2)
 
+                if let notice = visit.restrictedNotice {
+                    Label(notice, systemImage: "exclamationmark.triangle.fill")
+                        .font(.caption2)
+                        .foregroundStyle(.yellow)
+                }
+
                 if visit.status == .waiting {
-                    WatchDecisionButtons { decision in
+                    WatchDecisionButtons(canAuthorize: !visit.isHeldByAdministration) { decision in
                         if await onDecide(decision) { dismiss() }
                     }
                     .padding(.top, 6)

@@ -58,8 +58,38 @@ nonisolated struct Visit: Codable, Sendable, Hashable, Identifiable {
     /// Un servicio puede ir a varias viviendas (RF-71).
     var destinationCount: Int?
     var photoURL: URL?
+    /// Hasta cuándo puede responder antes de que el backend escale a WhatsApp
+    /// y llamada (RF-04). Si no llega, se usa `arrivedAt + responseWindow`.
+    var respondBy: Date?
+    /// Coincidencia con la lista restringida (RF-86). En esta app solo se
+    /// refleja como aviso o estado.
+    var restrictedMatch: RestrictedMatch?
+
+    /// Tiempo antes de escalar (unos 60 s, RF-04). Valor final pendiente: lo
+    /// configura la administración y debería llegar del backend en `respondBy`.
+    static let responseWindow: TimeInterval = 60
 
     var initials: String { name == "Sin nombre" ? "?" : Initials.from(name) }
+
+    var responseDeadline: Date? {
+        respondBy ?? arrivedAt?.addingTimeInterval(Self.responseWindow)
+    }
+
+    /// La administración detuvo el acceso: la autorización del residente no
+    /// basta (RF-86). Rechazar sí se puede.
+    var isHeldByAdministration: Bool { restrictedMatch == .confirmed }
+
+    /// Servicio que va a varias viviendas: cada una responde por separado (RF-71).
+    var goesToSeveralHomes: Bool { (destinationCount ?? 1) > 1 }
+}
+
+nonisolated enum RestrictedMatch: String, Codable, Sendable {
+    /// Solo coincide el nombre: "posible coincidencia", el guardia revisa la
+    /// identificación antes de detener el acceso.
+    case possible
+    /// Coincide la placa o la identificación: el acceso se detiene y lo decide
+    /// la administración aunque traiga código o autorización.
+    case confirmed
 }
 
 nonisolated enum VisitDecision: String, Codable, Sendable {

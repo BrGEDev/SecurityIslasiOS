@@ -45,9 +45,6 @@ struct LiveVisitCard: View {
     var isResponding = false
     let onDecision: (VisitDecision) async -> Void
 
-    /// Tiempo antes de escalar a WhatsApp y llamada (supuesto, RF-04).
-    static let responseWindow: TimeInterval = 60
-
     var body: some View {
         VStack(alignment: .leading, spacing: 14) {
             header
@@ -69,6 +66,19 @@ struct LiveVisitCard: View {
                 }
             }
 
+            if let notice = visit.restrictedNotice {
+                Label(notice, systemImage: "exclamationmark.triangle.fill")
+                    .font(.footnote.weight(.medium))
+                    .foregroundStyle(.yellow)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+
+            if visit.goesToSeveralHomes, let count = visit.destinationCount {
+                Label("Va a \(count) viviendas. Tu respuesta solo cuenta para la tuya.", systemImage: "house.and.flag.fill")
+                    .font(.footnote)
+                    .foregroundStyle(.white.opacity(0.65))
+            }
+
             HStack(spacing: 10) {
                 decisionButton("Rechazar", systemImage: "xmark", foreground: .red, background: .white.opacity(0.12)) {
                     await onDecision(.reject)
@@ -76,6 +86,9 @@ struct LiveVisitCard: View {
                 decisionButton("Autorizar", systemImage: "checkmark", foreground: .white, background: .green) {
                     await onDecision(.authorize)
                 }
+                .accessibilityIdentifier("autorizar-visita")
+                .disabled(visit.isHeldByAdministration)
+                .opacity(visit.isHeldByAdministration ? 0.4 : 1)
             }
             .disabled(isResponding)
 
@@ -106,8 +119,7 @@ struct LiveVisitCard: View {
 
     private var header: some View {
         TimelineView(.periodic(from: .now, by: 1)) { context in
-            let elapsed = visit.arrivedAt.map { context.date.timeIntervalSince($0) } ?? 0
-            let remaining = max(0, Self.responseWindow - elapsed)
+            let remaining = max(0, visit.responseDeadline.map { $0.timeIntervalSince(context.date) } ?? Visit.responseWindow)
             VStack(alignment: .leading, spacing: 8) {
                 HStack {
                     Label(AppInfo.name, systemImage: "checkmark.shield.fill")
@@ -122,10 +134,14 @@ struct LiveVisitCard: View {
                         .foregroundStyle(.orange)
                         .contentTransition(.numericText(countsDown: true))
                 }
-                ProgressView(value: remaining, total: Self.responseWindow)
+                ProgressView(value: min(remaining, Visit.responseWindow), total: Visit.responseWindow)
                     .tint(.orange)
                     .scaleEffect(x: 1, y: 0.6, anchor: .center)
                     .accessibilityHidden(true)
+                Text(visit.escalationText(at: context.date))
+                    .font(.caption)
+                    .foregroundStyle(.white.opacity(0.6))
+                    .fixedSize(horizontal: false, vertical: true)
             }
         }
     }
@@ -322,7 +338,12 @@ struct VisitRow: View {
                     .foregroundStyle(.secondary)
             }
             Spacer(minLength: 8)
-            StatusChip(text: visit.statusText, tint: visit.statusTint)
+            VStack(alignment: .trailing, spacing: 4) {
+                StatusChip(text: visit.statusText, tint: visit.statusTint)
+                if let match = visit.restrictedMatch {
+                    StatusChip(text: match == .confirmed ? "Lista restringida" : "Posible coincidencia", tint: .yellow)
+                }
+            }
         }
         .padding(.vertical, 2)
         .accessibilityElement(children: .combine)

@@ -8,6 +8,13 @@
 
 /* Begin PBXBuildFile section */
 		A28D5E7B3076F7F700BC8CF1 /* SecurityIslasWatch Watch App.app in Embed Watch Content */ = {isa = PBXBuildFile; fileRef = A28D5E5D3076F7F500BC8CF1 /* SecurityIslasWatch Watch App.app */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		A28D5F9F3077107E00BC8CF1 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A28D5F9E3077107E00BC8CF1 /* WidgetKit.framework */; };
+		A28D5FA13077107E00BC8CF1 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A28D5FA03077107E00BC8CF1 /* SwiftUI.framework */; };
+		A28D5FAC3077107F00BC8CF1 /* IslasWidgetsExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = A28D5F9C3077107E00BC8CF1 /* IslasWidgetsExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		A28D60F5307712F100BC8CF1 /* NotificationService.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = A28D60EE307712F100BC8CF1 /* NotificationService.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		A28D60FF3077132F00BC8CF1 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A28D5F9E3077107E00BC8CF1 /* WidgetKit.framework */; };
+		A28D61003077132F00BC8CF1 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = A28D5FA03077107E00BC8CF1 /* SwiftUI.framework */; };
+		A28D610B3077133000BC8CF1 /* IslasWatchWidgetsExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = A28D60FE3077132F00BC8CF1 /* IslasWatchWidgetsExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -32,6 +39,41 @@
 			remoteGlobalIDString = A28D5E5C3076F7F500BC8CF1;
 			remoteInfo = "SecurityIslasWatch Watch App";
 		};
+		A28D5FAA3077107F00BC8CF1 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 000000000000000000000000 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A28D5F9B3077107E00BC8CF1;
+			remoteInfo = IslasWidgetsExtension;
+		};
+		A28D60F3307712F100BC8CF1 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 000000000000000000000000 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A28D60ED307712F100BC8CF1;
+			remoteInfo = NotificationService;
+		};
+		A28D61093077133000BC8CF1 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 000000000000000000000000 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = A28D60FD3077132F00BC8CF1;
+			remoteInfo = IslasWatchWidgetsExtension;
+		};
+		F0000000000000000000A001 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 000000000000000000000000 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 000000000000000100000000;
+			remoteInfo = SecurityIslas;
+		};
+		F0000000000000000000A003 /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = 000000000000000000000000 /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 000000000000000100000000;
+			remoteInfo = SecurityIslas;
+		};
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXCopyFilesBuildPhase section */
@@ -44,6 +86,25 @@
 			);
 			name = "Embed Watch Content";
 		};
+		A28D5FB13077107F00BC8CF1 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			dstPath = "";
+			dstSubfolder = PlugIns;
+			files = (
+				A28D5FAC3077107F00BC8CF1 /* IslasWidgetsExtension.appex in Embed Foundation Extensions */,
+				A28D60F5307712F100BC8CF1 /* NotificationService.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+		};
+		A28D61103077133000BC8CF1 /* Embed Foundation Extensions */ = {
+			isa = PBXCopyFilesBuildPhase;
+			dstPath = "";
+			dstSubfolder = PlugIns;
+			files = (
+				A28D610B3077133000BC8CF1 /* IslasWatchWidgetsExtension.appex in Embed Foundation Extensions */,
+			);
+			name = "Embed Foundation Extensions";
+		};
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
@@ -51,11 +112,53 @@
 		A28D5E5D3076F7F500BC8CF1 /* SecurityIslasWatch Watch App.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = "SecurityIslasWatch Watch App.app"; sourceTree = BUILT_PRODUCTS_DIR; };
 		A28D5E693076F7F700BC8CF1 /* SecurityIslasWatch Watch AppTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "SecurityIslasWatch Watch AppTests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
 		A28D5E733076F7F700BC8CF1 /* SecurityIslasWatch Watch AppUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = "SecurityIslasWatch Watch AppUITests.xctest"; sourceTree = BUILT_PRODUCTS_DIR; };
+		A28D5F9C3077107E00BC8CF1 /* IslasWidgetsExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = IslasWidgetsExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		A28D5F9E3077107E00BC8CF1 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = /System/Library/Frameworks/WidgetKit.framework; sourceTree = "<absolute>"; };
+		A28D5FA03077107E00BC8CF1 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = /System/Library/Frameworks/SwiftUI.framework; sourceTree = "<absolute>"; };
+		A28D60D73077115500BC8CF1 /* IslasWidgetsExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = IslasWidgetsExtension.entitlements; sourceTree = "<group>"; };
+		A28D60EE307712F100BC8CF1 /* NotificationService.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = NotificationService.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		A28D60FE3077132F00BC8CF1 /* IslasWatchWidgetsExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = IslasWatchWidgetsExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		A28D61153077138700BC8CF1 /* SecurityIslasTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SecurityIslasTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		A28D61203077138700BC8CF1 /* SecurityIslasUITests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = SecurityIslasUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
+
+/* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
+		A28D5F8D30770CC300BC8CF1 /* Exceptions for "SecurityIslas" folder in "SecurityIslas" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = 000000000000000100000000 /* SecurityIslas */;
+		};
+		A28D5FB03077107F00BC8CF1 /* Exceptions for "IslasWidgets" folder in "IslasWidgetsExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = A28D5F9B3077107E00BC8CF1 /* IslasWidgetsExtension */;
+		};
+		A28D60F9307712F100BC8CF1 /* Exceptions for "NotificationService" folder in "NotificationService" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = A28D60ED307712F100BC8CF1 /* NotificationService */;
+		};
+		A28D610F3077133000BC8CF1 /* Exceptions for "IslasWatchWidgets" folder in "IslasWatchWidgetsExtension" target */ = {
+			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
+			membershipExceptions = (
+				Info.plist,
+			);
+			target = A28D60FD3077132F00BC8CF1 /* IslasWatchWidgetsExtension */;
+		};
+/* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		000000000000000000000010 /* SecurityIslas */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				A28D5F8D30770CC300BC8CF1 /* Exceptions for "SecurityIslas" folder in "SecurityIslas" target */,
+			);
 			path = SecurityIslas;
 			sourceTree = "<group>";
 		};
@@ -77,6 +180,40 @@
 		A28D5E763076F7F700BC8CF1 /* SecurityIslasWatch Watch AppUITests */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
 			path = "SecurityIslasWatch Watch AppUITests";
+			sourceTree = "<group>";
+		};
+		A28D5FA23077107E00BC8CF1 /* IslasWidgets */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				A28D5FB03077107F00BC8CF1 /* Exceptions for "IslasWidgets" folder in "IslasWidgetsExtension" target */,
+			);
+			path = IslasWidgets;
+			sourceTree = "<group>";
+		};
+		A28D60EF307712F100BC8CF1 /* NotificationService */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				A28D60F9307712F100BC8CF1 /* Exceptions for "NotificationService" folder in "NotificationService" target */,
+			);
+			path = NotificationService;
+			sourceTree = "<group>";
+		};
+		A28D61013077132F00BC8CF1 /* IslasWatchWidgets */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			exceptions = (
+				A28D610F3077133000BC8CF1 /* Exceptions for "IslasWatchWidgets" folder in "IslasWatchWidgetsExtension" target */,
+			);
+			path = IslasWatchWidgets;
+			sourceTree = "<group>";
+		};
+		A28D61163077138700BC8CF1 /* SecurityIslasTests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = SecurityIslasTests;
+			sourceTree = "<group>";
+		};
+		A28D61213077138700BC8CF1 /* SecurityIslasUITests */ = {
+			isa = PBXFileSystemSynchronizedRootGroup;
+			path = SecurityIslasUITests;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -102,17 +239,53 @@
 			files = (
 			);
 		};
+		A28D5F993077107E00BC8CF1 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			files = (
+				A28D5FA13077107E00BC8CF1 /* SwiftUI.framework in Frameworks */,
+				A28D5F9F3077107E00BC8CF1 /* WidgetKit.framework in Frameworks */,
+			);
+		};
+		A28D60EB307712F100BC8CF1 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			files = (
+			);
+		};
+		A28D60FB3077132F00BC8CF1 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			files = (
+				A28D61003077132F00BC8CF1 /* SwiftUI.framework in Frameworks */,
+				A28D60FF3077132F00BC8CF1 /* WidgetKit.framework in Frameworks */,
+			);
+		};
+		A28D61123077138700BC8CF1 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			files = (
+			);
+		};
+		A28D611D3077138700BC8CF1 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			files = (
+			);
+		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
 		000000000000000000000001 = {
 			isa = PBXGroup;
 			children = (
+				A28D60D73077115500BC8CF1 /* IslasWidgetsExtension.entitlements */,
 				000000000000000000000010 /* SecurityIslas */,
 				000000000000000000000011 /* Shared */,
 				A28D5E5E3076F7F500BC8CF1 /* SecurityIslasWatch Watch App */,
 				A28D5E6C3076F7F700BC8CF1 /* SecurityIslasWatch Watch AppTests */,
 				A28D5E763076F7F700BC8CF1 /* SecurityIslasWatch Watch AppUITests */,
+				A28D5FA23077107E00BC8CF1 /* IslasWidgets */,
+				A28D60EF307712F100BC8CF1 /* NotificationService */,
+				A28D61013077132F00BC8CF1 /* IslasWatchWidgets */,
+				A28D61163077138700BC8CF1 /* SecurityIslasTests */,
+				A28D61213077138700BC8CF1 /* SecurityIslasUITests */,
+				A28D5F9D3077107E00BC8CF1 /* Frameworks */,
 				000000000000000000000020 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -124,8 +297,22 @@
 				A28D5E5D3076F7F500BC8CF1 /* SecurityIslasWatch Watch App.app */,
 				A28D5E693076F7F700BC8CF1 /* SecurityIslasWatch Watch AppTests.xctest */,
 				A28D5E733076F7F700BC8CF1 /* SecurityIslasWatch Watch AppUITests.xctest */,
+				A28D5F9C3077107E00BC8CF1 /* IslasWidgetsExtension.appex */,
+				A28D60EE307712F100BC8CF1 /* NotificationService.appex */,
+				A28D60FE3077132F00BC8CF1 /* IslasWatchWidgetsExtension.appex */,
+				A28D61153077138700BC8CF1 /* SecurityIslasTests.xctest */,
+				A28D61203077138700BC8CF1 /* SecurityIslasUITests.xctest */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		A28D5F9D3077107E00BC8CF1 /* Frameworks */ = {
+			isa = PBXGroup;
+			children = (
+				A28D5F9E3077107E00BC8CF1 /* WidgetKit.framework */,
+				A28D5FA03077107E00BC8CF1 /* SwiftUI.framework */,
+			);
+			name = Frameworks;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -139,11 +326,14 @@
 				000000000000000130000000 /* Frameworks */,
 				000000000000000140000000 /* Resources */,
 				A28D5E7F3076F7F700BC8CF1 /* Embed Watch Content */,
+				A28D5FB13077107F00BC8CF1 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
 			dependencies = (
 				A28D5E7A3076F7F700BC8CF1 /* PBXTargetDependency */,
+				A28D5FAB3077107F00BC8CF1 /* PBXTargetDependency */,
+				A28D60F4307712F100BC8CF1 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				000000000000000000000010 /* SecurityIslas */,
@@ -161,12 +351,16 @@
 				A28D5E593076F7F500BC8CF1 /* Sources */,
 				A28D5E5A3076F7F500BC8CF1 /* Frameworks */,
 				A28D5E5B3076F7F500BC8CF1 /* Resources */,
+				A28D61103077133000BC8CF1 /* Embed Foundation Extensions */,
 			);
 			buildRules = (
 			);
+			dependencies = (
+				A28D610A3077133000BC8CF1 /* PBXTargetDependency */,
+			);
 			fileSystemSynchronizedGroups = (
-				A28D5E5E3076F7F500BC8CF1 /* SecurityIslasWatch Watch App */,
 				000000000000000000000011 /* Shared */,
+				A28D5E5E3076F7F500BC8CF1 /* SecurityIslasWatch Watch App */,
 			);
 			name = "SecurityIslasWatch Watch App";
 			productName = "SecurityIslasWatch Watch App";
@@ -215,6 +409,103 @@
 			productReference = A28D5E733076F7F700BC8CF1 /* SecurityIslasWatch Watch AppUITests.xctest */;
 			productType = "com.apple.product-type.bundle.ui-testing";
 		};
+		A28D5F9B3077107E00BC8CF1 /* IslasWidgetsExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A28D5FAD3077107F00BC8CF1 /* Build configuration list for PBXNativeTarget "IslasWidgetsExtension" */;
+			buildPhases = (
+				A28D5F983077107E00BC8CF1 /* Sources */,
+				A28D5F993077107E00BC8CF1 /* Frameworks */,
+				A28D5F9A3077107E00BC8CF1 /* Resources */,
+			);
+			buildRules = (
+			);
+			fileSystemSynchronizedGroups = (
+				000000000000000000000011 /* Shared */,
+				A28D5FA23077107E00BC8CF1 /* IslasWidgets */,
+			);
+			name = IslasWidgetsExtension;
+			productName = IslasWidgetsExtension;
+			productReference = A28D5F9C3077107E00BC8CF1 /* IslasWidgetsExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+		A28D60ED307712F100BC8CF1 /* NotificationService */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A28D60F6307712F100BC8CF1 /* Build configuration list for PBXNativeTarget "NotificationService" */;
+			buildPhases = (
+				A28D60EA307712F100BC8CF1 /* Sources */,
+				A28D60EB307712F100BC8CF1 /* Frameworks */,
+				A28D60EC307712F100BC8CF1 /* Resources */,
+			);
+			buildRules = (
+			);
+			fileSystemSynchronizedGroups = (
+				A28D60EF307712F100BC8CF1 /* NotificationService */,
+			);
+			name = NotificationService;
+			productName = NotificationService;
+			productReference = A28D60EE307712F100BC8CF1 /* NotificationService.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+		A28D60FD3077132F00BC8CF1 /* IslasWatchWidgetsExtension */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A28D610C3077133000BC8CF1 /* Build configuration list for PBXNativeTarget "IslasWatchWidgetsExtension" */;
+			buildPhases = (
+				A28D60FA3077132F00BC8CF1 /* Sources */,
+				A28D60FB3077132F00BC8CF1 /* Frameworks */,
+				A28D60FC3077132F00BC8CF1 /* Resources */,
+			);
+			buildRules = (
+			);
+			fileSystemSynchronizedGroups = (
+				A28D61013077132F00BC8CF1 /* IslasWatchWidgets */,
+			);
+			name = IslasWatchWidgetsExtension;
+			productName = IslasWatchWidgetsExtension;
+			productReference = A28D60FE3077132F00BC8CF1 /* IslasWatchWidgetsExtension.appex */;
+			productType = "com.apple.product-type.app-extension";
+		};
+		A28D61143077138700BC8CF1 /* SecurityIslasTests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A28D61193077138700BC8CF1 /* Build configuration list for PBXNativeTarget "SecurityIslasTests" */;
+			buildPhases = (
+				A28D61113077138700BC8CF1 /* Sources */,
+				A28D61123077138700BC8CF1 /* Frameworks */,
+				A28D61133077138700BC8CF1 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				F0000000000000000000A002 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				A28D61163077138700BC8CF1 /* SecurityIslasTests */,
+			);
+			name = SecurityIslasTests;
+			productName = SecurityIslasTests;
+			productReference = A28D61153077138700BC8CF1 /* SecurityIslasTests.xctest */;
+			productType = "com.apple.product-type.bundle.unit-test";
+		};
+		A28D611F3077138700BC8CF1 /* SecurityIslasUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = A28D61243077138700BC8CF1 /* Build configuration list for PBXNativeTarget "SecurityIslasUITests" */;
+			buildPhases = (
+				A28D611C3077138700BC8CF1 /* Sources */,
+				A28D611D3077138700BC8CF1 /* Frameworks */,
+				A28D611E3077138700BC8CF1 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				F0000000000000000000A004 /* PBXTargetDependency */,
+			);
+			fileSystemSynchronizedGroups = (
+				A28D61213077138700BC8CF1 /* SecurityIslasUITests */,
+			);
+			name = SecurityIslasUITests;
+			productName = SecurityIslasUITests;
+			productReference = A28D61203077138700BC8CF1 /* SecurityIslasUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
 /* End PBXNativeTarget section */
 
 /* Begin PBXProject section */
@@ -239,6 +530,23 @@
 						CreatedOnToolsVersion = 27.0;
 						TestTargetID = A28D5E5C3076F7F500BC8CF1;
 					};
+					A28D5F9B3077107E00BC8CF1 = {
+						CreatedOnToolsVersion = 27.0;
+					};
+					A28D60ED307712F100BC8CF1 = {
+						CreatedOnToolsVersion = 27.0;
+					};
+					A28D60FD3077132F00BC8CF1 = {
+						CreatedOnToolsVersion = 27.0;
+					};
+					A28D61143077138700BC8CF1 = {
+						CreatedOnToolsVersion = 27.0;
+						TestTargetID = 000000000000000100000000;
+					};
+					A28D611F3077138700BC8CF1 = {
+						CreatedOnToolsVersion = 27.0;
+						TestTargetID = 000000000000000100000000;
+					};
 				};
 			};
 			buildConfigurationList = 000000000000000010000000 /* Build configuration list for PBXProject "SecurityIslasiOS" */;
@@ -259,6 +567,11 @@
 				A28D5E5C3076F7F500BC8CF1 /* SecurityIslasWatch Watch App */,
 				A28D5E683076F7F700BC8CF1 /* SecurityIslasWatch Watch AppTests */,
 				A28D5E723076F7F700BC8CF1 /* SecurityIslasWatch Watch AppUITests */,
+				A28D5F9B3077107E00BC8CF1 /* IslasWidgetsExtension */,
+				A28D60ED307712F100BC8CF1 /* NotificationService */,
+				A28D60FD3077132F00BC8CF1 /* IslasWatchWidgetsExtension */,
+				A28D61143077138700BC8CF1 /* SecurityIslasTests */,
+				A28D611F3077138700BC8CF1 /* SecurityIslasUITests */,
 			);
 		};
 /* End PBXProject section */
@@ -280,6 +593,31 @@
 			);
 		};
 		A28D5E713076F7F700BC8CF1 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			files = (
+			);
+		};
+		A28D5F9A3077107E00BC8CF1 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			files = (
+			);
+		};
+		A28D60EC307712F100BC8CF1 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			files = (
+			);
+		};
+		A28D60FC3077132F00BC8CF1 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			files = (
+			);
+		};
+		A28D61133077138700BC8CF1 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			files = (
+			);
+		};
+		A28D611E3077138700BC8CF1 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			files = (
 			);
@@ -307,6 +645,31 @@
 			files = (
 			);
 		};
+		A28D5F983077107E00BC8CF1 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			files = (
+			);
+		};
+		A28D60EA307712F100BC8CF1 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			files = (
+			);
+		};
+		A28D60FA3077132F00BC8CF1 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			files = (
+			);
+		};
+		A28D61113077138700BC8CF1 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			files = (
+			);
+		};
+		A28D611C3077138700BC8CF1 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			files = (
+			);
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
@@ -324,6 +687,31 @@
 			isa = PBXTargetDependency;
 			target = A28D5E5C3076F7F500BC8CF1 /* SecurityIslasWatch Watch App */;
 			targetProxy = A28D5E793076F7F700BC8CF1 /* PBXContainerItemProxy */;
+		};
+		A28D5FAB3077107F00BC8CF1 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = A28D5F9B3077107E00BC8CF1 /* IslasWidgetsExtension */;
+			targetProxy = A28D5FAA3077107F00BC8CF1 /* PBXContainerItemProxy */;
+		};
+		A28D60F4307712F100BC8CF1 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = A28D60ED307712F100BC8CF1 /* NotificationService */;
+			targetProxy = A28D60F3307712F100BC8CF1 /* PBXContainerItemProxy */;
+		};
+		A28D610A3077133000BC8CF1 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = A28D60FD3077132F00BC8CF1 /* IslasWatchWidgetsExtension */;
+			targetProxy = A28D61093077133000BC8CF1 /* PBXContainerItemProxy */;
+		};
+		F0000000000000000000A002 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 000000000000000100000000 /* SecurityIslas */;
+			targetProxy = F0000000000000000000A001 /* PBXContainerItemProxy */;
+		};
+		F0000000000000000000A004 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 000000000000000100000000 /* SecurityIslas */;
+			targetProxy = F0000000000000000000A003 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
 
@@ -471,11 +859,13 @@
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = SecurityIslas/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Islas Security";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				INFOPLIST_KEY_NSFaceIDUsageDescription = "Usamos Face ID para proteger la llave de tu iPhone: abrir la pluma, recurrentes y cambios en tu cuenta.";
 				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "Si activas el pánico, compartimos tu ubicación en vivo con la caseta o tus contactos aunque la app esté cerrada.";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Se usa para abrir la pluma cerca de la entrada.";
+				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
@@ -517,11 +907,13 @@
 				ENABLE_PREVIEWS = YES;
 				ENABLE_USER_SELECTED_FILES = readonly;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = SecurityIslas/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = "Islas Security";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				INFOPLIST_KEY_NSFaceIDUsageDescription = "Usamos Face ID para proteger la llave de tu iPhone: abrir la pluma, recurrentes y cambios en tu cuenta.";
 				INFOPLIST_KEY_NSLocationAlwaysAndWhenInUseUsageDescription = "Si activas el pánico, compartimos tu ubicación en vivo con la caseta o tus contactos aunque la app esté cerrada.";
 				INFOPLIST_KEY_NSLocationWhenInUseUsageDescription = "Se usa para abrir la pluma cerca de la entrada.";
+				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphoneos*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSceneManifest_Generation[sdk=iphonesimulator*]" = YES;
 				"INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents[sdk=iphoneos*]" = YES;
@@ -715,6 +1107,320 @@
 			};
 			name = Release;
 		};
+		A28D5FAE3077107F00BC8CF1 /* Debug configuration for PBXNativeTarget "IslasWidgetsExtension" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_ENTITLEMENTS = IslasWidgetsExtension.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 9NTUW88L35;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = IslasWidgets/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "Islas Security";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 27.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = app.security.islasgower.IslasWidgets;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				REGISTER_APP_GROUPS = YES;
+				SDKROOT = auto;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				XROS_DEPLOYMENT_TARGET = 27.0;
+			};
+			name = Debug;
+		};
+		A28D5FAF3077107F00BC8CF1 /* Release configuration for PBXNativeTarget "IslasWidgetsExtension" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_ENTITLEMENTS = IslasWidgetsExtension.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 9NTUW88L35;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = IslasWidgets/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "Islas Security";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				"LD_RUNPATH_SEARCH_PATHS[sdk=macosx*]" = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+				MACOSX_DEPLOYMENT_TARGET = 27.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = app.security.islasgower.IslasWidgets;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				REGISTER_APP_GROUPS = YES;
+				SDKROOT = auto;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				XROS_DEPLOYMENT_TARGET = 27.0;
+			};
+			name = Release;
+		};
+		A28D60F7307712F100BC8CF1 /* Debug configuration for PBXNativeTarget "NotificationService" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 9NTUW88L35;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = NotificationService/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = NotificationService;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = app.security.islasgower.NotificationService;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 1;
+			};
+			name = Debug;
+		};
+		A28D60F8307712F100BC8CF1 /* Release configuration for PBXNativeTarget "NotificationService" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 9NTUW88L35;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = NotificationService/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = NotificationService;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = app.security.islasgower.NotificationService;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = iphoneos;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				VALIDATE_PRODUCT = YES;
+			};
+			name = Release;
+		};
+		A28D610D3077133000BC8CF1 /* Debug configuration for PBXNativeTarget "IslasWatchWidgetsExtension" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 9NTUW88L35;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = IslasWatchWidgets/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "Islas Security";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = app.security.islasgower.watchkitapp.IslasWatchWidgets;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				WATCHOS_DEPLOYMENT_TARGET = 10.0;
+			};
+			name = Debug;
+		};
+		A28D610E3077133000BC8CF1 /* Release configuration for PBXNativeTarget "IslasWatchWidgetsExtension" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = 9NTUW88L35;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = IslasWatchWidgets/Info.plist;
+				INFOPLIST_KEY_CFBundleDisplayName = "Islas Security";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@executable_path/../../Frameworks",
+					"@executable_path/../../../../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = app.security.islasgower.watchkitapp.IslasWatchWidgets;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = watchos;
+				SKIP_INSTALL = YES;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 4;
+				VALIDATE_PRODUCT = YES;
+				WATCHOS_DEPLOYMENT_TARGET = 10.0;
+			};
+			name = Release;
+		};
+		A28D611A3077138700BC8CF1 /* Debug configuration for PBXNativeTarget "SecurityIslasTests" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MACOSX_DEPLOYMENT_TARGET = 27.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.yourcompany.SecurityIslasTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = auto;
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/SecurityIslas.app/SecurityIslas";
+				XROS_DEPLOYMENT_TARGET = 27.0;
+			};
+			name = Debug;
+		};
+		A28D611B3077138700BC8CF1 /* Release configuration for PBXNativeTarget "SecurityIslasTests" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MACOSX_DEPLOYMENT_TARGET = 27.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.yourcompany.SecurityIslasTests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = auto;
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_DEFAULT_ACTOR_ISOLATION = MainActor;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/SecurityIslas.app/SecurityIslas";
+				XROS_DEPLOYMENT_TARGET = 27.0;
+			};
+			name = Release;
+		};
+		A28D61253077138700BC8CF1 /* Debug configuration for PBXNativeTarget "SecurityIslasUITests" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MACOSX_DEPLOYMENT_TARGET = 27.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.yourcompany.SecurityIslasUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = auto;
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				TEST_TARGET_NAME = SecurityIslas;
+				XROS_DEPLOYMENT_TARGET = 27.0;
+			};
+			name = Debug;
+		};
+		A28D61263077138700BC8CF1 /* Release configuration for PBXNativeTarget "SecurityIslasUITests" */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_STYLE = Automatic;
+				CURRENT_PROJECT_VERSION = 1;
+				GENERATE_INFOPLIST_FILE = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 17.0;
+				MACOSX_DEPLOYMENT_TARGET = 27.0;
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.yourcompany.SecurityIslasUITests;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SDKROOT = auto;
+				STRING_CATALOG_GENERATE_SYMBOLS = NO;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SWIFT_APPROACHABLE_CONCURRENCY = YES;
+				SWIFT_EMIT_LOC_STRINGS = NO;
+				SWIFT_UPCOMING_FEATURE_MEMBER_IMPORT_VISIBILITY = YES;
+				SWIFT_VERSION = 6.0;
+				TARGETED_DEVICE_FAMILY = 1;
+				TEST_TARGET_NAME = SecurityIslas;
+				XROS_DEPLOYMENT_TARGET = 27.0;
+			};
+			name = Release;
+		};
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
@@ -755,6 +1461,46 @@
 			buildConfigurations = (
 				A28D5E843076F7F700BC8CF1 /* Debug configuration for PBXNativeTarget "SecurityIslasWatch Watch AppUITests" */,
 				A28D5E853076F7F700BC8CF1 /* Release configuration for PBXNativeTarget "SecurityIslasWatch Watch AppUITests" */,
+			);
+			defaultConfigurationName = Release;
+		};
+		A28D5FAD3077107F00BC8CF1 /* Build configuration list for PBXNativeTarget "IslasWidgetsExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A28D5FAE3077107F00BC8CF1 /* Debug configuration for PBXNativeTarget "IslasWidgetsExtension" */,
+				A28D5FAF3077107F00BC8CF1 /* Release configuration for PBXNativeTarget "IslasWidgetsExtension" */,
+			);
+			defaultConfigurationName = Release;
+		};
+		A28D60F6307712F100BC8CF1 /* Build configuration list for PBXNativeTarget "NotificationService" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A28D60F7307712F100BC8CF1 /* Debug configuration for PBXNativeTarget "NotificationService" */,
+				A28D60F8307712F100BC8CF1 /* Release configuration for PBXNativeTarget "NotificationService" */,
+			);
+			defaultConfigurationName = Release;
+		};
+		A28D610C3077133000BC8CF1 /* Build configuration list for PBXNativeTarget "IslasWatchWidgetsExtension" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A28D610D3077133000BC8CF1 /* Debug configuration for PBXNativeTarget "IslasWatchWidgetsExtension" */,
+				A28D610E3077133000BC8CF1 /* Release configuration for PBXNativeTarget "IslasWatchWidgetsExtension" */,
+			);
+			defaultConfigurationName = Release;
+		};
+		A28D61193077138700BC8CF1 /* Build configuration list for PBXNativeTarget "SecurityIslasTests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A28D611A3077138700BC8CF1 /* Debug configuration for PBXNativeTarget "SecurityIslasTests" */,
+				A28D611B3077138700BC8CF1 /* Release configuration for PBXNativeTarget "SecurityIslasTests" */,
+			);
+			defaultConfigurationName = Release;
+		};
+		A28D61243077138700BC8CF1 /* Build configuration list for PBXNativeTarget "SecurityIslasUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				A28D61253077138700BC8CF1 /* Debug configuration for PBXNativeTarget "SecurityIslasUITests" */,
+				A28D61263077138700BC8CF1 /* Release configuration for PBXNativeTarget "SecurityIslasUITests" */,
 			);
 			defaultConfigurationName = Release;
 		};

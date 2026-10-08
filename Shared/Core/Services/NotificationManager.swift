@@ -7,9 +7,9 @@
 //    "Rechazar" funciona con el teléfono bloqueado (RF-02).
 //  • VISITA_INFO: invitaciones y recurrentes, informativo y sin botones (RF-14).
 //
-//  La foto de la visita la descargará la Notification Service Extension
-//  (target pendiente). Con el backend mock, Cuenta > Simulación programa un
-//  aviso local con la misma categoría.
+//  El push real llega por APNs (`PushRegistrar`); la foto la adjunta la
+//  Notification Service Extension. Con el backend mock, Cuenta > Simulación
+//  programa un aviso local con la misma categoría y el mismo `userInfo`.
 //
 
 import Foundation
@@ -31,6 +31,8 @@ final class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
     @ObservationIgnored var decisionHandler: ((String, VisitDecision) async -> Void)?
     /// Se llama cuando el usuario toca el aviso (sin elegir botón).
     @ObservationIgnored var openHandler: ((String) -> Void)?
+    /// Llegó un aviso con la app en primer plano (para recargar los datos).
+    @ObservationIgnored var presentHandler: ((RemotePush) -> Void)?
 
     private let center = UNUserNotificationCenter.current()
 
@@ -90,7 +92,7 @@ final class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
         content.sound = .default
         content.categoryIdentifier = NotificationCategory.pendingVisit
         content.interruptionLevel = .timeSensitive
-        content.userInfo = ["visitId": visit.id, "kind": visit.kind.rawValue]
+        content.userInfo = ["type": "visit.pending", "visitId": visit.id, "kind": visit.kind.rawValue]
 
         let trigger = UNTimeIntervalNotificationTrigger(timeInterval: seconds, repeats: false)
         let request = UNNotificationRequest(identifier: visit.id, content: content, trigger: trigger)
@@ -128,6 +130,10 @@ final class NotificationManager: NSObject, UNUserNotificationCenterDelegate {
         willPresent notification: UNNotification,
         withCompletionHandler completionHandler: @escaping (UNNotificationPresentationOptions) -> Void
     ) {
+        let push = RemotePush(userInfo: notification.request.content.userInfo)
+        Task { @MainActor [weak self] in
+            self?.presentHandler?(push)
+        }
         completionHandler([.banner, .list, .sound])
     }
 

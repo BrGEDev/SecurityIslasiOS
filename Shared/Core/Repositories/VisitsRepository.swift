@@ -13,6 +13,8 @@ protocol VisitsRepository {
     /// Autorizar o rechazar. No pide Face ID (RF-02, RF-67).
     func decide(_ visitId: String, decision: VisitDecision) async throws -> Visit
     func markSleepover(_ visit: Visit) async throws -> Visit
+    /// Token de push de la Live Activity de la visita (ActivityKit).
+    func registerActivityToken(_ token: ActivityTokenRequest, for visitId: String) async throws
 
     func invitations() async throws -> [Invitation]
     /// Invitación única o de evento. No pide Face ID para no meter fricción (RF-07).
@@ -55,6 +57,10 @@ final class RemoteVisitsRepository: VisitsRepository {
 
     func markSleepover(_ visit: Visit) async throws -> Visit {
         try await client.send(API.Visits.markSleepover(visit.id))
+    }
+
+    func registerActivityToken(_ token: ActivityTokenRequest, for visitId: String) async throws {
+        _ = try await client.send(API.Visits.registerActivityToken(visitId, token))
     }
 
     func invitations() async throws -> [Invitation] {
@@ -107,5 +113,82 @@ final class RemoteVisitsRepository: VisitsRepository {
 
     func history(category: HistoryCategory?) async throws -> [HistoryEvent] {
         try await client.send(API.Residence.history(category: category))
+    }
+}
+
+/// Mismo repositorio con caché sin red (SwiftData). Las lecturas regresan lo
+/// último guardado si no hay conexión; las escrituras van siempre al backend.
+final class CachedVisitsRepository: VisitsRepository {
+    private let remote: VisitsRepository
+    private let cache: OfflineCache
+    /// Se llama después de responder una visita desde cualquier lugar (para
+    /// cerrar su Live Activity y su aviso).
+    var onDecision: ((Visit, VisitDecision) -> Void)?
+
+    init(remote: VisitsRepository, cache: OfflineCache) {
+        self.remote = remote
+        self.cache = cache
+    }
+
+    func home() async throws -> HomeSummary {
+        try await cache.fetch("home") { try await remote.home() }
+    }
+
+    func today() async throws -> [Visit] {
+        try await cache.fetch("visits.today") { try await remote.today() }
+    }
+
+    func decide(_ visitId: String, decision: VisitDecision) async throws -> Visit {
+        let visit = try await remote.decide(visitId, decision: decision)
+        onDecision?(visit, decision)
+        return visit
+    }
+
+    func markSleepover(_ visit: Visit) async throws -> Visit {
+        try await remote.markSleepover(visit)
+    }
+
+    func registerActivityToken(_ token: ActivityTokenRequest, for visitId: String) async throws {
+        try await remote.registerActivityToken(token, for: visitId)
+    }
+
+    func invitations() async throws -> [Invitation] {
+        try await cache.fetch("invitations") { try await remote.invitations() }
+    }
+
+    func createInvitation(_ request: NewInvitationRequest) async throws -> Invitation {
+        try await remote.createInvitation(request)
+    }
+
+    func recurring() async throws -> [RecurringAccess] {
+        try await cache.fetch("recurring") { try await remote.recurring() }
+    }
+
+    func recurringDetail(id: String) async throws -> RecurringAccess {
+        try await cache.fetch("recurring.\(id)") { try await remote.recurringDetail(id: id) }
+    }
+
+    func createRecurring(_ request: NewRecurringRequest) async throws -> RecurringAccess {
+        try await remote.createRecurring(request)
+    }
+
+    func revoke(_ recurring: RecurringAccess) async throws {
+        try await remote.revoke(recurring)
+    }
+
+    func packages() async throws -> [Package] {
+        try await cache.fetch("packages") { try await remote.packages() }
+    }
+
+    func packagePolicy() async throws -> PackagePolicy {
+        try await remote.packagePolicy()
+    }
+
+    func updatePackagePolicy(_ policy: PackagePolicy) async throws -> PackagePolicy {
+        try await remote.updatePackagePolicy(policy)
+    }
+
+    func history(category: HistoryCategory?) async throws -> [HistoryEvent] {
+        try await cache.fetch("history.\(category?.rawValue ?? "all")") { try await remote.history(category: category) }
     }
 }

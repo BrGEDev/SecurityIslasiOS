@@ -69,9 +69,20 @@ nonisolated struct DeviceKeyRequest: Codable, Sendable {
     let model: DeviceModel
     /// Llave pública P-256 en X9.63, base64.
     let publicKey: String
-    /// Atestación de App Attest (pendiente, ver DECISIONES.md).
+    /// Objeto de App Attest en base64 (`nil` en el simulador o sin soporte).
     let attestation: String?
+    /// Identificador de la llave de App Attest (para aserciones futuras).
+    var attestationKeyId: String?
+    /// Reto con el que se atestó (`clientDataHash = SHA256(reto ‖ publicKey)`).
+    var attestationChallenge: String?
     let hardwareBacked: Bool
+}
+
+/// Reto de un solo uso para App Attest (supuesto).
+nonisolated struct AttestChallenge: Codable, Sendable {
+    /// Bytes aleatorios en base64 (mínimo 16).
+    let challenge: String
+    let expiresAt: Date
 }
 
 /// Vínculo del Apple Watch (supuesto, ver DECISIONES.md). El iPhone pide un
@@ -95,6 +106,36 @@ nonisolated struct WatchLinkRequest: Codable, Sendable {
 nonisolated struct WatchLinkResponse: Codable, Sendable {
     let tokens: TokenResponse
     let profile: UserProfile
+}
+
+/// Token de push (APNs directo, decisión de Brandon). Supuesto: el backend
+/// guarda un token por dispositivo y tipo, y lo borra al cerrar sesión.
+nonisolated struct PushTokenRequest: Codable, Sendable, Equatable {
+    nonisolated enum Kind: String, Codable, Sendable {
+        /// Avisos normales (VISITA_PENDIENTE, VISITA_INFO, pánico...).
+        case alert
+        /// "Push to start" de ActivityKit (iOS 17.2+): el backend inicia la
+        /// Live Activity de una visita aunque la app esté cerrada.
+        case liveActivityStart
+    }
+
+    nonisolated enum Environment: String, Codable, Sendable {
+        case sandbox
+        case production
+    }
+
+    let kind: Kind
+    /// Token en hexadecimal.
+    let token: String
+    let environment: Environment
+    /// `apns-topic`: bundle id de la app.
+    let topic: String
+}
+
+/// Token de actualización de la Live Activity de una visita (supuesto).
+nonisolated struct ActivityTokenRequest: Codable, Sendable {
+    let token: String
+    let environment: PushTokenRequest.Environment
 }
 
 nonisolated struct VisitDecisionRequest: Codable, Sendable {
@@ -165,6 +206,15 @@ enum API {
         static func createWatchLink() -> Endpoint<WatchLinkTicket> {
             Endpoint(.post, "devices/watch-link")
         }
+
+        static func attestChallenge() -> Endpoint<AttestChallenge> {
+            Endpoint(.post, "devices/attest-challenge")
+        }
+
+        /// Supuesto: `PUT devices/current/push-token` (idempotente).
+        static func registerPushToken(_ body: PushTokenRequest) throws -> Endpoint<EmptyResponse> {
+            try Endpoint(.put, "devices/current/push-token", body: body)
+        }
     }
 
     enum Residence {
@@ -201,6 +251,12 @@ enum API {
 
         static func markSleepover(_ id: String) -> Endpoint<Visit> {
             Endpoint(.post, "visits/\(id)/sleepover")
+        }
+
+        /// Supuesto: token de ActivityKit de la Live Activity de esa visita,
+        /// para que el backend la actualice o la cierre por push (RF-06).
+        static func registerActivityToken(_ id: String, _ body: ActivityTokenRequest) throws -> Endpoint<EmptyResponse> {
+            try Endpoint(.put, "visits/\(id)/activity-token", body: body)
         }
 
         static func invitations() -> Endpoint<[Invitation]> {
@@ -299,6 +355,11 @@ enum API {
 
         static func updateWorkPermit(_ body: WorkPermitSettings) throws -> Endpoint<WorkPermit> {
             try Endpoint(.patch, "work-permit", body: body)
+        }
+
+        /// Supuesto (RF-84): el arrendatario confirma si sigue o se muda.
+        static func confirmTenancy(_ body: TenancyConfirmationRequest) throws -> Endpoint<UserProfile> {
+            try Endpoint(.post, "residence/tenancy", body: body)
         }
     }
 }

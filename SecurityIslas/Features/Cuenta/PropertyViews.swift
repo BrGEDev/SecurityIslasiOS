@@ -25,11 +25,18 @@ struct GuestsView: View {
                     Text("Sin huéspedes registrados.").foregroundStyle(.secondary)
                 }
                 ForEach(guests) { guest in
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(guest.name).font(.subheadline.weight(.semibold))
-                        Text("\(guest.arrival.relativeDayAndTime) → \(guest.departure.relativeDayAndTime)")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
+                    NavigationLink(value: guest) {
+                        HStack(spacing: 12) {
+                            InitialsAvatar(initials: Initials.from(guest.name))
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text(guest.name).font(.subheadline.weight(.semibold))
+                                Text("\(guest.arrival.relativeDayAndTime) → \(guest.departure.relativeDayAndTime)")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                            Spacer(minLength: 8)
+                            GuestStageChip(stage: guest.stage())
+                        }
                     }
                 }
             } footer: {
@@ -44,6 +51,9 @@ struct GuestsView: View {
                 Button { showNew = true } label: { Image(systemName: "plus") }
                     .accessibilityLabel("Nuevo huésped")
             }
+        }
+        .navigationDestination(for: TemporaryGuest.self) { guest in
+            GuestDetailView(guest: guest)
         }
         .task { await load() }
         .sheet(isPresented: $showNew) {
@@ -61,6 +71,91 @@ struct GuestsView: View {
         } catch {
             errorMessage = error.userMessage
         }
+    }
+}
+
+private struct GuestStageChip: View {
+    let stage: TemporaryGuest.Stage
+
+    var body: some View {
+        switch stage {
+        case .upcoming: StatusChip(text: "Por llegar", tint: .blue)
+        case .staying: StatusChip(text: "Hospedado", tint: .green)
+        case .finished: StatusChip(text: "Venció", tint: .gray)
+        }
+    }
+}
+
+/// Su propio QR durante la estancia (RF-92). La página del enlace muestra el
+/// QR dinámico y el PIN; aquí se ve el mismo enlace para reenviarlo y cada
+/// entrada registrada (también llega un aviso por cada una).
+struct GuestDetailView: View {
+    let guest: TemporaryGuest
+
+    var body: some View {
+        List {
+            Section {
+                VStack(spacing: 12) {
+                    InitialsAvatar(initials: Initials.from(guest.name), size: 64)
+                    Text(guest.name).font(.title3.weight(.semibold))
+                    GuestStageChip(stage: guest.stage())
+                    if guest.stage() != .finished, let url = guest.shareURL,
+                       let image = QRCodeRenderer.image(for: url.absoluteString) {
+                        Image(uiImage: image)
+                            .interpolation(.none)
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 180, height: 180)
+                            .padding(12)
+                            .background(.white, in: .rect(cornerRadius: 18, style: .continuous))
+                            .accessibilityLabel("Código QR del huésped")
+                    }
+                }
+                .frame(maxWidth: .infinity)
+                .listRowBackground(Color.clear)
+            }
+
+            Section {
+                LabeledContent("Llegada", value: guest.arrival.relativeDayAndTime.sentenceCased)
+                LabeledContent("Salida", value: guest.departure.relativeDayAndTime.sentenceCased)
+                LabeledContent("Celular", value: guest.phone)
+                if let pin = guest.pin {
+                    LabeledContent("PIN de respaldo", value: pin)
+                }
+            } footer: {
+                Text("El acceso vence solo al terminar la estancia. No convierte tu vivienda en comercio.")
+            }
+
+            Section {
+                if let entries = guest.entries, !entries.isEmpty {
+                    ForEach(entries) { entry in
+                        VStack(alignment: .leading, spacing: 2) {
+                            Text(entry.enteredAt.relativeDayAndTime.sentenceCased).font(.subheadline.weight(.semibold))
+                            Text(entry.exitedAt.map { "Entró \(entry.enteredAt.shortTime) · salió \($0.shortTime)" } ?? "Entró \(entry.enteredAt.shortTime)")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                } else {
+                    Text("Aún no ha entrado.").foregroundStyle(.secondary)
+                }
+            } header: {
+                Text("Entradas")
+            } footer: {
+                Text("Te avisamos cada vez que entra.")
+            }
+
+            if guest.stage() != .finished, let url = guest.shareURL {
+                Section {
+                    ShareLink(item: url, message: Text("Hola, este es tu acceso de huésped. Muéstralo en la caseta.")) {
+                        Label("Reenviar acceso", systemImage: "square.and.arrow.up")
+                    }
+                }
+            }
+        }
+        .readableContentWidth()
+        .navigationTitle("Huésped")
+        .navigationBarTitleDisplayMode(.inline)
     }
 }
 
@@ -171,10 +266,28 @@ struct WorkPermitView: View {
                     )) {
                         VStack(alignment: .leading, spacing: 2) {
                             Text("Resumen diario de entradas")
-                            Text("Aviso inmediato fuera de horario").font(.caption).foregroundStyle(.secondary)
+                            Text("Al final del día, quién entró a tu obra").font(.caption).foregroundStyle(.secondary)
                         }
                     }
                     .tint(.green)
+                } footer: {
+                    Text("Siempre te avisamos al instante si alguien entra fuera del horario de obra o coincide con la lista restringida.")
+                }
+
+                if permit.status == .approved {
+                    Section {
+                        let entries = permit.todayEntries ?? []
+                        if entries.isEmpty {
+                            Text("Hoy no ha entrado nadie.").foregroundStyle(.secondary)
+                        }
+                        ForEach(entries) { entry in
+                            WorkEntryRow(entry: entry)
+                        }
+                    } header: {
+                        Text("Entradas de hoy")
+                    } footer: {
+                        Text("El guardia registra a cada trabajador por nombre al entrar. Fuera de horario aplica el flujo normal de visitas.")
+                    }
                 }
             } else if isLoaded {
                 ContentUnavailableView {
@@ -235,6 +348,32 @@ struct WorkPermitView: View {
         } catch {
             errorMessage = error.userMessage
         }
+    }
+}
+
+private struct WorkEntryRow: View {
+    let entry: WorkEntry
+
+    var body: some View {
+        HStack(spacing: 12) {
+            InitialsAvatar(initials: Initials.from(entry.name))
+            VStack(alignment: .leading, spacing: 2) {
+                Text(entry.name).font(.subheadline.weight(.semibold))
+                Text(entry.exitedAt.map { "Entró \(entry.enteredAt.shortTime) · salió \($0.shortTime)" } ?? "Entró \(entry.enteredAt.shortTime)")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            Spacer(minLength: 8)
+            VStack(alignment: .trailing, spacing: 4) {
+                if entry.outsideSchedule {
+                    StatusChip(text: "Fuera de horario", tint: .orange)
+                }
+                if let match = entry.restrictedMatch {
+                    StatusChip(text: match == .confirmed ? "Lista restringida" : "Posible coincidencia", tint: .yellow)
+                }
+            }
+        }
+        .accessibilityElement(children: .combine)
     }
 }
 

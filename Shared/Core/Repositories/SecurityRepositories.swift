@@ -92,6 +92,9 @@ protocol HouseholdRepository {
     func workPermit() async throws -> WorkPermit?
     func requestWorkPermit(_ request: WorkPermitRequest) async throws -> WorkPermit
     func setDailySummary(_ enabled: Bool) async throws -> WorkPermit
+
+    /// Fin de contrato del arrendatario (RF-84). Es un cambio de cuenta: firma.
+    func confirmTenancy(_ decision: TenancyDecision) async throws -> UserProfile
 }
 
 final class RemoteHouseholdRepository: HouseholdRepository {
@@ -149,5 +152,11 @@ final class RemoteHouseholdRepository: HouseholdRepository {
 
     func setDailySummary(_ enabled: Bool) async throws -> WorkPermit {
         try await client.send(API.Household.updateWorkPermit(WorkPermitSettings(dailySummary: enabled)))
+    }
+
+    func confirmTenancy(_ decision: TenancyDecision) async throws -> UserProfile {
+        let reason = decision == .stay ? "Confirmar que sigues en la vivienda" : "Dar de baja tu acceso"
+        let endpoint = try await signer.sign(API.Household.confirmTenancy(TenancyConfirmationRequest(decision: decision)), reason: reason)
+        return try await client.send(endpoint)
     }
 }

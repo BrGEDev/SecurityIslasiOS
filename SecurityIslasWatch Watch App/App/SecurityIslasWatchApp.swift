@@ -20,6 +20,9 @@ struct SecurityIslasWatchApp: App {
                 .environment(\.locale, .app)
                 .environment(appDelegate.container)
                 .environment(appDelegate.container.session)
+                .onOpenURL { url in
+                    appDelegate.container.linkRequest = AppLink(url: url)
+                }
         }
     }
 }

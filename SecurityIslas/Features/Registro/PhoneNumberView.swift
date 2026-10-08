@@ -47,6 +47,7 @@ struct PhoneNumberView: View {
                             .font(.title3)
                             .focused($focused)
                             .textFieldStyle(FieldStyle())
+                            .accessibilityIdentifier("celular")
                     }
 
                     InlineError(message: model.errorMessage)

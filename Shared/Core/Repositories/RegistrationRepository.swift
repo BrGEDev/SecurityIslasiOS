@@ -44,10 +44,13 @@ protocol DeviceRepository {
     /// registro (pantalla 3b), donde este iPhone aún no tiene llave.
     func remove(_ device: Device, signed: Bool) async throws
     /// Crea la llave del Secure Enclave (atada a Face ID) y registra la pública.
-    func registerThisDevice() async throws -> Device
+    /// `usingPasscode`: la llave se ata al código del iPhone en lugar de Face ID.
+    func registerThisDevice(usingPasscode: Bool) async throws -> Device
     /// Código de un solo uso para vincular el Apple Watch. Agregar un
     /// dispositivo es un cambio de cuenta: pide Face ID (RF-67).
     func createWatchLink() async throws -> WatchLinkTicket
+    /// Registra el token de APNs de este dispositivo.
+    func registerPushToken(_ request: PushTokenRequest) async throws
 }
 
 final class RemoteDeviceRepository: DeviceRepository {
@@ -56,19 +59,22 @@ final class RemoteDeviceRepository: DeviceRepository {
     private let keys: DeviceKeyManager
     private let biometrics: BiometricAuthenticator
     private let descriptor: DeviceDescriptor
+    private let attester: AppAttester
 
     init(
         client: any APIClientProtocol,
         signer: RequestSigner,
         keys: DeviceKeyManager,
         biometrics: BiometricAuthenticator,
-        descriptor: DeviceDescriptor
+        descriptor: DeviceDescriptor,
+        attester: AppAttester
     ) {
         self.client = client
         self.signer = signer
         self.keys = keys
         self.biometrics = biometrics
         self.descriptor = descriptor
+        self.attester = attester
     }
 
     func devices() async throws -> DeviceList {
@@ -88,14 +94,26 @@ final class RemoteDeviceRepository: DeviceRepository {
         return try await client.send(endpoint)
     }
 
-    func registerThisDevice() async throws -> Device {
-        let context = try await biometrics.authenticate(reason: "Crear la llave de este iPhone")
-        let publicKey = try keys.createKey(context: context)
+    func registerPushToken(_ request: PushTokenRequest) async throws {
+        _ = try await client.send(API.Devices.registerPushToken(request))
+    }
+
+    func registerThisDevice(usingPasscode: Bool) async throws -> Device {
+        // Con Face ID registrado, la llave es `.biometryCurrentSet`: se verifica
+        // con biometría para no crearla con un contexto de código.
+        // En el simulador la llave es de software: no hay nada que atar a Face ID.
+        let biometric = !usingPasscode && DeviceKeyManager.usesSecureEnclave
+            && DeviceKeyManager.biometryDomainState() != nil
+        let context = try await biometrics.authenticate(reason: "Crear la llave de este iPhone", biometryOnly: biometric)
+        let publicKey = try keys.createKey(context: context, usingPasscode: !biometric)
+        let attestation = await attester.attest(publicKey: publicKey)
         let request = DeviceKeyRequest(
             name: descriptor.name,
             model: descriptor.model,
             publicKey: publicKey.base64EncodedString(),
-            attestation: nil,
+            attestation: attestation?.attestation,
+            attestationKeyId: attestation?.keyId,
+            attestationChallenge: attestation?.challenge,
             hardwareBacked: keys.isHardwareBacked
         )
         do {

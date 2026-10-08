@@ -6,6 +6,12 @@
 //  geocerca de la entrada. Con el backend mock la posición es simulada
 //  (Cuenta > Simulación) para poder probar los tres estados del botón.
 //
+//  • Geocercas con `CLMonitor`: la de la entrada (150 m alrededor de cada
+//    carril) y el perímetro del fraccionamiento. El sistema avisa al entrar o
+//    salir aunque la app esté suspendida (con permiso "Siempre").
+//  • Pánico: `CLBackgroundActivitySession` + modo de fondo de ubicación para
+//    seguir mandando la ubicación con la app en segundo plano.
+//
 
 import CoreLocation
 import Foundation
@@ -65,10 +71,20 @@ final class LocationService: NSObject, CLLocationManagerDelegate {
 
     private(set) var simulatedPosition: SimulatedPosition
 
+    /// Último estado conocido de las geocercas (`nil` = sin dato todavía).
+    private(set) var isNearEntrance: Bool?
+    private(set) var isInsidePerimeter: Bool?
+
     let usesSimulation: Bool
     private let manager = CLLocationManager()
     private static let simulationKey = "mock.simulatedPosition"
     private static let alwaysRequestedKey = "location.alwaysRequested"
+    private static let monitorName = "islas.geocercas"
+
+    @ObservationIgnored private var monitorTask: Task<Void, Never>?
+    @ObservationIgnored private var monitoredGate: GateConfiguration?
+    @ObservationIgnored private var backgroundSession: CLBackgroundActivitySession?
+    @ObservationIgnored private var nearLanes: Set<String> = []
 
     init(usesSimulation: Bool) {
         self.usesSimulation = usesSimulation
@@ -135,6 +151,111 @@ final class LocationService: NSObject, CLLocationManagerDelegate {
             }
         }
         throw LocationError.unavailable
+    }
+
+    // MARK: - Seguimiento continuo (pánico)
+
+    /// Ubicación continua mientras dure la alerta. Abre una
+    /// `CLBackgroundActivitySession` para que iOS siga entregando posiciones
+    /// con la app en segundo plano (modo de fondo "location") y muestre el
+    /// indicador azul de ubicación. Se cierra al terminar el `AsyncStream`.
+    func trackCoordinates() -> AsyncStream<Coordinate> {
+        if usesSimulation {
+            let coordinate = simulatedCoordinate(for: simulatedPosition)
+            return AsyncStream { continuation in
+                let task = Task {
+                    while !Task.isCancelled {
+                        continuation.yield(coordinate)
+                        try? await Task.sleep(for: .seconds(5))
+                    }
+                    continuation.finish()
+                }
+                continuation.onTermination = { _ in task.cancel() }
+            }
+        }
+
+        backgroundSession?.invalidate()
+        backgroundSession = CLBackgroundActivitySession()
+        return AsyncStream { continuation in
+            let task = Task { [weak self] in
+                do {
+                    for try await update in CLLocationUpdate.liveUpdates(.otherNavigation) {
+                        guard let location = update.location, location.horizontalAccuracy <= 100 else { continue }
+                        let coordinate = Coordinate(latitude: location.coordinate.latitude, longitude: location.coordinate.longitude)
+                        self?.lastCoordinate = coordinate
+                        continuation.yield(coordinate)
+                    }
+                } catch {}
+                continuation.finish()
+            }
+            continuation.onTermination = { [weak self] _ in
+                task.cancel()
+                Task { @MainActor in self?.endBackgroundTracking() }
+            }
+        }
+    }
+
+    private func endBackgroundTracking() {
+        backgroundSession?.invalidate()
+        backgroundSession = nil
+    }
+
+    // MARK: - Geocercas (CLMonitor)
+
+    /// Registra la geocerca de la entrada (una por carril) y el perímetro.
+    /// Se llama cada vez que llega la configuración en el resumen de Inicio;
+    /// si no cambió, no hace nada.
+    func monitorGeofences(_ gate: GateConfiguration) {
+        if usesSimulation {
+            evaluate(gate, at: simulatedCoordinate(for: simulatedPosition))
+            return
+        }
+        #if os(watchOS)
+        // watchOS no tiene CLMonitor: se calcula con la última posición.
+        if let lastCoordinate { evaluate(gate, at: lastCoordinate) }
+        #else
+        guard authorization.isGranted, monitoredGate != gate else { return }
+        monitoredGate = gate
+        monitorTask?.cancel()
+        monitorTask = Task { [weak self] in
+            let monitor = await CLMonitor(Self.monitorName)
+            for identifier in await monitor.identifiers {
+                await monitor.remove(identifier)
+            }
+            for lane in gate.lanes {
+                let condition = CLMonitor.CircularGeographicCondition(
+                    center: lane.location.clCoordinate,
+                    radius: gate.entranceRadius
+                )
+                await monitor.add(condition, identifier: "entrance.\(lane.id)", assuming: .unsatisfied)
+            }
+            let perimeter = CLMonitor.CircularGeographicCondition(
+                center: gate.perimeterCenter.clCoordinate,
+                radius: gate.perimeterRadius
+            )
+            await monitor.add(perimeter, identifier: "perimeter", assuming: .unsatisfied)
+
+            do {
+                for try await event in await monitor.events {
+                    self?.apply(identifier: event.identifier, satisfied: event.state == .satisfied)
+                }
+            } catch {}
+        }
+        #endif
+    }
+
+    private func evaluate(_ gate: GateConfiguration, at coordinate: Coordinate) {
+        isNearEntrance = gate.lanes.contains { coordinate.distance(to: $0.location) <= gate.entranceRadius }
+        isInsidePerimeter = coordinate.distance(to: gate.perimeterCenter) <= gate.perimeterRadius
+    }
+
+    private func apply(identifier: String, satisfied: Bool) {
+        if identifier == "perimeter" {
+            isInsidePerimeter = satisfied
+        } else if identifier.hasPrefix("entrance.") {
+            if satisfied { nearLanes.insert(identifier) } else { nearLanes.remove(identifier) }
+            isNearEntrance = !nearLanes.isEmpty
+        }
     }
 
     private func simulatedCoordinate(for position: SimulatedPosition) -> Coordinate {

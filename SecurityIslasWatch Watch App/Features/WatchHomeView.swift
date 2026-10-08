@@ -82,9 +82,10 @@ struct WatchHomeView: View {
     @Environment(WatchContainer.self) private var container
     @State private var model: WatchHomeModel?
     @State private var page: Page = .gate
+    @State private var path = NavigationPath()
 
     var body: some View {
-        NavigationStack {
+        NavigationStack(path: $path) {
             Group {
                 if let model {
                     pages(model)
@@ -129,6 +130,24 @@ struct WatchHomeView: View {
                 }
             }
         }
+        .onChange(of: container.linkRequest, initial: true) { _, link in
+            // Complicaciones (pantalla 43): abren la página correspondiente.
+            guard let link else { return }
+            container.linkRequest = nil
+            switch link {
+            case .panic:
+                path = NavigationPath()
+                path.append(WatchRoute.panic)
+            case .gate where profile.canUseGate:
+                path = NavigationPath()
+                page = .gate
+            case .qr, .gate:
+                path = NavigationPath()
+                page = .qr
+            case .visits:
+                path = NavigationPath()
+            }
+        }
         .task {
             if !container.location.usesSimulation, container.location.authorization == .notDetermined {
                 container.location.requestWhenInUse()
@@ -144,9 +163,10 @@ struct WatchHomeView: View {
     }
 
     private func pages(_ model: WatchHomeModel) -> some View {
-        let showsVisits = !profile.isRestrictedOwner && !model.pending.isEmpty
+        // El menor no autoriza visitas: solo su QR y su paso.
+        let showsVisits = profile.canAuthorizeVisits && !model.pending.isEmpty
         // El propietario no residente entra con su QR, sin botón de abrir (RF-87).
-        let showsGate = profile.role != .nonResidentOwner
+        let showsGate = profile.canUseGate
         return TabView(selection: $page) {
             if showsVisits {
                 WatchPendingPage(model: model)
@@ -261,6 +281,8 @@ private struct WatchPendingPage: View {
 /// Rechazar (rojo) y Autorizar (verde), del tamaño de los botones de llamada.
 struct WatchDecisionButtons: View {
     var isBusy = false
+    /// Lista restringida (RF-86): la administración decide, solo se puede rechazar.
+    var canAuthorize = true
     let onDecide: (VisitDecision) async -> Void
 
     @State private var working: VisitDecision?
@@ -269,6 +291,8 @@ struct WatchDecisionButtons: View {
         HStack(spacing: 22) {
             button(.reject, symbol: "xmark", colors: BrandPalette.red, label: "Rechazar")
             button(.authorize, symbol: "checkmark", colors: BrandPalette.green, label: "Autorizar")
+                .disabled(!canAuthorize)
+                .opacity(canAuthorize ? 1 : 0.4)
         }
         .disabled(isBusy || working != nil)
     }

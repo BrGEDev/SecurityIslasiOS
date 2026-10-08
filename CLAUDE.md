@@ -32,7 +32,8 @@ firma o mocks, y anota ahí cada supuesto nuevo.
 - **Destino mínimo iOS 17**, con APIs nuevas detrás de `if #available` (Liquid Glass, accesorio de
   la barra de pestañas, `sharedBackgroundVisibility` vía `.sharedBackgroundHidden()`, etc.).
 - **Carpetas sincronizadas de Xcode:** los archivos nuevos dentro de `SecurityIslas/` se incluyen
-  solos. Targets, capabilities y extensiones nuevas sí requieren Xcode (pídeselo al usuario).
+  solos. Targets, capabilities y extensiones nuevas se crean con las herramientas de Xcode (o se le
+  piden al usuario si no están disponibles).
 - **No hay compilador de Swift en el contenedor de la nube.** Revisa a mano llaves/paréntesis y
   tipos; pide al usuario compilar en Xcode cuando el cambio sea delicado.
 - **Git:** el usuario trabaja directo en `main` ("sube directo"). Antes de subir:
@@ -60,79 +61,49 @@ firma o mocks, y anota ahí cada supuesto nuevo.
 
 ## Estado actual
 
-Hecho con mocks y la capa de red/sesión real: secciones **A** (registro completo, cuenta existente
-3a/3b, aprobación, permisos, Face ID, Inicio y estados del botón), **B** (visitas, invitación única y
-de evento, recurrentes, detalle, paquetería), **C** (Mi QR TOTP, historial, paquetes), **D** (pánico
-en la app: mantener, cuenta regresiva, alerta dentro/fuera) y **F** (cuenta, familia, dispositivos,
-contactos, huéspedes, permiso de obra, propietario no residente) y **G** en el reloj (vínculo, visitas,
-pluma, Mi QR, pánico). Notificaciones locales simuladas con categorías `VISITA_PENDIENTE` /
-`VISITA_INFO` desde **Cuenta › Simulación** (en el iPhone) y el menú Simulación del reloj.
+Hecho con mocks y la capa de red/sesión real: secciones **A** a **G** (sin caída). Además:
+
+| Bloque | Dónde |
+|---|---|
+| Push por APNs (token, push silencioso RF-06, abrir la visita desde el aviso) | `PushRegistrar`, `AppDelegate`, `AppContainer.handleRemote` |
+| App Attest al registrar la llave | `Shared/Core/Security/AppAttester.swift` |
+| Llave `.biometryCurrentSet` (o código del iPhone si así se eligió) | `DeviceKeyManager`, `SessionStore.checkDeviceKey` |
+| Pánico en segundo plano (`CLBackgroundActivitySession`) y geocercas con `CLMonitor` | `LocationService`, `PanicViewModel` |
+| Caché sin red con SwiftData | `Shared/Core/Persistence/OfflineCache.swift`, `CachedVisitsRepository` |
+| RF-04, RF-06, RF-71, RF-86 en la visita | `Visit`, `LiveVisitCard`, `VisitPresentation` |
+| Huésped con QR (RF-92), entradas de obra (RF-88/89), fin de contrato (RF-84) | `PropertyViews`, `TenancyCard` en `HomeView` |
+| Siri / Atajos / botón de Acción | `SecurityIslas/Intents/AccessIntents.swift` |
+| Widgets, Live Activity y controles (iOS 18) | target `IslasWidgetsExtension` (carpeta `IslasWidgets` + `Shared`) |
+| Foto y tipo en el aviso | target `NotificationService` |
+| Complicaciones y Smart Stack del reloj | target `IslasWatchWidgetsExtension` |
+| Pruebas | `SecurityIslasTests` (Swift Testing) y `SecurityIslasUITests` (XCUITest, `-uiTesting YES`) |
+
+Targets: `SecurityIslas`, `SecurityIslasWatch Watch App`, `IslasWidgetsExtension`, `NotificationService`,
+`IslasWatchWidgetsExtension`, `SecurityIslasTests`, `SecurityIslasUITests` (más las plantillas de
+pruebas del reloj). `Shared/` también se compila en `IslasWidgetsExtension`. App Group
+`group.app.security.islasgower` en la app y los widgets (foto de estado `WidgetSnapshot`).
+Enlaces internos `islassecurity://gate|panic|qr|visits` (`AppLink`).
 
 ## Pendiente por integrar del brief
 
 Marca cada punto al terminarlo y mueve los supuestos a `DECISIONES.md`.
 
-### Requiere nuevos targets en Xcode (pedir al usuario que los cree)
-
-- [ ] **Keychain Sharing + App Group** en todos los targets y `AppInfo.keychainAccessGroup` con el
-      grupo, para compartir la sesión con widgets, extensión e intents (prerrequisito de todo lo de
-      abajo).
-- [ ] **Notification Service Extension** (fase 1): descarga la foto de la visita y la adjunta;
-      muestra el tipo Visita/Servicio. Push `VISITA_PENDIENTE` con `id`, tipo y URL de foto.
-- [ ] **Live Activity** (fase 1, pantallas 11–12) con ActivityKit y push: cuenta regresiva de 60 s,
-      botones Autorizar/Rechazar en pantalla bloqueada y Dynamic Island (compacta: iniciales a la
-      izquierda, tiempo a la derecha). Se cierra en todos los teléfonos de la casa cuando alguien
-      responde (RF-06). Al agotarse dice "sin respuesta"; **nunca** se autoriza sola (RF-04).
-      Enviar el push token de ActivityKit al backend (contrato pendiente).
-- [ ] **Widgets iOS** (fase 2–3, pantalla 30): mediano interactivo (visita pendiente + abrir pluma /
-      solicitar paso) y chico de pánico, que con un toque abre la pantalla 24 y **no** envía directo
-      (RF-41). Pantalla bloqueada: distancia a la entrada y visitas pendientes (pantalla 31).
-- [ ] **Controles del Centro de control** (`ControlWidget`, iOS 18, fase 4): Abrir pluma, Pánico y
-      Mi QR; también en las esquinas de la pantalla bloqueada.
-- [x] **App watchOS independiente** (sección G, pantallas 39–41): vínculo desde el iPhone con llave
-      propia, visitas con Autorizar / Rechazar (también desde el aviso, RF-03), abrir pluma /
-      solicitar paso (RF-23, RF-68), Mi QR sin internet y pánico. Ver "Apple Watch" en
-      `DECISIONES.md`.
-- [ ] **Widgets de watchOS** (pantalla 43): complicaciones y Smart Stack para abrir pluma, pánico y
-      Mi QR (target Widget Extension de watchOS). Escena de notificación con foto (pantalla 39).
-      La caída (pantalla 42) es **fase 5 y propuesta**: requiere permiso de Apple, no presentarla
-      como confirmada.
-
-### En el target actual
-
-- [ ] **App Intents / Siri** (fase 4, pantallas 28–29, RF-30 a RF-34): `AutorizarVisitaIntent`
-      (si hay varias pendientes pregunta cuál; visitas como `AppEntity`), `AbrirPlumaIntent` (mismas
-      reglas de geocerca y carril: en compartido "Solicitar paso"; fuera de la geocerca responde que
-      hay que estar cerca), `PanicoIntent`. `AppShortcutsProvider` con frases que usan
-      `AppInfo.name`. Exigir dispositivo desbloqueado (RF-32). Asignables al botón de Acción (RF-34).
-      Los intents deben llamar a los mismos repositorios que la app.
-- [ ] **Registro de APNs/FCM**: pedir el device token, enviarlo al backend y manejar el push real
-      (hoy solo hay avisos locales simulados). Decisión abierta: APNs directo o FCM.
-- [ ] **App Attest** (`DCAppAttestService`) al registrar la llave pública del dispositivo
-      (`attestation` va `nil` hoy).
-- [ ] **Ubicación en segundo plano durante el pánico**: `CLBackgroundActivitySession` + Background
-      Modes (ubicación) para seguir mandando la ubicación con la app cerrada (ver
-      `PanicViewModel`). Usar `CLMonitor` para las geocercas (entrada 150 m y perímetro).
-- [ ] **Persistencia con SwiftData**: caché de visitas, recurrentes, invitaciones e historial para
-      abrir sin red.
-- [ ] **Escalamiento visible (RF-04)**: en la visita pendiente mostrar que a los 60 s se escala a
-      WhatsApp y llamada y que queda "sin respuesta".
-- [ ] **Avisos a los demás integrantes (RF-06)**: cuando otro responde, mostrar quién (ya llega el
-      409 `ALREADY_RESPONDED`; falta reflejarlo en la Live Activity y en el aviso).
-- [ ] **Servicio con varias viviendas (RF-71)** y **lista restringida** como aviso/estado
-      ("posible coincidencia", RF-86) en la visita.
-- [ ] **Huésped temporal** con su propio QR durante la estancia y aviso por entrada (RF-92); **permiso
-      de obra** con resumen diario y aviso fuera de horario (RF-89) — hoy son formularios con mock.
-- [ ] **Arrendatario con fin de contrato (RF-84)**: pedir confirmación o baja al llegar la fecha.
+- [ ] **Keychain Sharing**: no hizo falta (los widgets leen `WidgetSnapshot` del App Group y los
+      botones corren en el proceso de la app). Activarlo solo si una extensión necesita la sesión;
+      al hacerlo, migrar los ítems del Keychain (si no, todos tendrán que volver a entrar).
+- [ ] **Escena de notificación del reloj con foto** (pantalla 39, `WKUserNotificationHostingController`).
+- [ ] **Siri en el reloj** (RF-30/31 en Apple Watch) y push propio del reloj.
 - [ ] **Crashlytics o Sentry** (única dependencia externa permitida además de
       `swift-openapi-generator`, que se integra cuando exista el OpenAPI).
+- [ ] **Universal Links**: falta el entitlement `associated-domains` con el dominio real de
+      invitaciones (`AppInfo.inviteHost` es de ejemplo).
+- [ ] Contrato con backend de todo lo marcado **(supuesto)** en `DECISIONES.md`.
 
 ### Calidad (criterio de entrega por fase)
 
-- [ ] Target de pruebas con **Swift Testing**: `AuthInterceptor` (refresh proactivo, 401 → un
-      reintento, single-flight), `RequestSigner`, `ResidentQRGenerator` (TOTP), `SessionStore`
-      (transiciones), reglas de geocerca/carril y `MockServer`.
-- [ ] **XCUITest** de registro, autorizar visita y abrir pluma (el brief lo exige).
+- [x] Target de pruebas con **Swift Testing** (interceptor, firma, TOTP, geocerca/carril, roles,
+      push, visitas y `MockServer`). Falta: transiciones de `SessionStore`.
+- [x] **XCUITest** de registro, autorizar visita y abrir pluma.
 - [ ] **SwiftLint y SwiftFormat** sin warnings.
 - [ ] Revisión de accesibilidad: VoiceOver y texto grande en todas las pantallas (RNF-10).
 - [ ] Preparar localización (String Catalog) aunque el lanzamiento sea solo es-MX (RNF-09).
@@ -140,24 +111,26 @@ Marca cada punto al terminarlo y mueve los supuestos a `DECISIONES.md`.
 ### Estructura (opcional, mecánico)
 
 - [ ] Mover carpetas a paquetes SPM: `Core` → `AccessCore`, `DesignSystem` → `AccessUI`,
-      `Features/X` → `FeatureX` (necesario para compartir código con widgets, intents y watchOS).
+      `Features/X` → `FeatureX`.
 - [ ] iPhone Duo con Xcode 27.1: `GeometryProxy.reservedRegions(kind: .division)` y
       `onHingeChange` para colocar las columnas según el pliegue real.
 
-## Decisiones ya tomadas
+## Decisiones ya tomadas (Brandon)
 
 - Los Apple Watch **no cuentan** en el límite de 3 dispositivos y se pueden tener varios.
+- Mínimo **iOS 17** (los controles del Centro de control van detrás de `if #available(iOS 18)`).
+- Push por **APNs directo**.
+- Nombre: **Islas Security** por ahora (`AppInfo.name` = `CFBundleDisplayName`).
+- Llave del dispositivo con **`.biometryCurrentSet`**: si cambian las caras o huellas, se vuelve a
+  activar Face ID y se registra una llave nueva.
+- **Menor**: solo abre la pluma (o solicita paso) para su propio paso y usa su QR; no autoriza
+  visitas, no invita ni cambia accesos.
 
 ## Decisiones abiertas (preguntar, no decidir)
 
-- iOS 17 o iOS 18 como mínimo (los controles requieren iOS 18).
-- Push por APNs directo o FCM.
-- Nombre definitivo de la app (va en las frases de Siri; hoy `AppInfo.name = "Acceso"` y el
-  `CFBundleDisplayName` es "Islas Security").
-- `.biometryCurrentSet` vs `.userPresence`/`.biometryAny` para la llave del dispositivo.
-- Qué puede hacer un menor (en la maqueta, solo su QR).
 - Valores finales: tiempo de escalamiento, usos del PIN, límite de aperturas, hora de cierre de
-  accesos, retención de datos.
+  accesos, retención de datos, anticipación del aviso de fin de contrato.
+- Nombre definitivo de la app (las frases de Siri usan el nombre de la app).
 - Verificar con Apple: botón de Acción del Watch Ultra, App Attest en watchOS, App Review de
   ubicación "Siempre" y Critical Alerts, permiso de detección de caídas.
 

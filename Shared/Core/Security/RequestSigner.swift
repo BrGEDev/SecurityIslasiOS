@@ -40,7 +40,7 @@ final class RequestSigner {
 
     /// Pide Face ID (o reutiliza una autenticación reciente) y firma el endpoint.
     func sign<Response>(_ endpoint: Endpoint<Response>, reason: String) async throws -> Endpoint<Response> {
-        let context = try await biometrics.authenticate(reason: reason)
+        let context = try await biometrics.authenticate(reason: reason, biometryOnly: keys.requiresBiometry)
         let timestamp = String(Int(Date.now.timeIntervalSince1970))
         let nonce = UUID().uuidString
         let message = SignaturePayload.canonical(

@@ -37,6 +37,7 @@ struct SimulationView: View {
             Section {
                 AsyncButton("Llega una visita a caseta") { await simulate(.visit) }
                 AsyncButton("Llega un servicio a caseta") { await simulate(.service) }
+                AsyncButton("Otro integrante responde primero") { await simulateOtherMember() }
             } header: {
                 Text("Avisos")
             } footer: {
@@ -76,6 +77,23 @@ struct SimulationView: View {
         .readableContentWidth()
         .navigationTitle("Simulación")
         .navigationBarTitleDisplayMode(.inline)
+    }
+
+    /// Imita el push silencioso `visit.responded` (RF-06): se quita el aviso
+    /// y la tarjeta de Inicio muestra quién respondió.
+    private func simulateOtherMember() async {
+        guard let server = container.mockServer,
+              let visit = await server.simulateOtherMemberResponse() else {
+            lastAction = "No hay visitas esperando en caseta."
+            return
+        }
+        container.handleRemote(.visitResponded(
+            visitId: visit.id,
+            visitName: visit.name,
+            decision: .authorize,
+            respondedBy: visit.respondedBy
+        ))
+        lastAction = "\(visit.respondedBy ?? "Otro integrante") autorizó a \(visit.name)."
     }
 
     private func simulate(_ kind: AccessKind) async {

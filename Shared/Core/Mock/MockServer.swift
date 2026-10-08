@@ -131,6 +131,9 @@ actor MockServer {
         if let data = UserDefaults.standard.data(forKey: MockSettings.stateKey),
            let saved = try? JSONCoding.decoder().decode(MockPersistentState.self, from: data) {
             persistent = saved
+            // Cuentas de prueba agregadas después de guardar el estado.
+            let known = Set(saved.accounts.map(\.profile.id))
+            persistent.accounts += MockSeed.accounts(now: now).filter { !known.contains($0.profile.id) }
         } else {
             persistent = MockPersistentState(accounts: MockSeed.accounts(now: now))
         }
@@ -191,6 +194,15 @@ actor MockServer {
         return visit
     }
 
+    /// Simula que otro integrante de la casa respondió primero (RF-06).
+    func simulateOtherMemberResponse() -> Visit? {
+        guard let index = visits.firstIndex(where: { $0.status == .waiting }) else { return nil }
+        visits[index].status = .authorized
+        visits[index].respondedBy = "Ana"
+        visits[index].enteredAt = .now
+        return visits[index]
+    }
+
     func resetAll() {
         UserDefaults.standard.removeObject(forKey: MockSettings.stateKey)
         persistent = MockPersistentState(accounts: MockSeed.accounts(now: .now))
@@ -231,6 +243,16 @@ actor MockServer {
         if let params = r.match("DELETE", "devices/:id") { return try removeDevice(r, id: params[0]) }
         if r.match("POST", "devices/key") != nil { return try registerKey(r) }
         if r.match("POST", "devices/watch-link") != nil { return try createWatchLink(r) }
+        if r.match("POST", "devices/attest-challenge") != nil {
+            _ = try authenticatedAccount(r)
+            let bytes = (0..<32).map { _ in UInt8.random(in: .min ... .max) }
+            return try ok(AttestChallenge(challenge: Data(bytes).base64EncodedString(), expiresAt: .now.addingTimeInterval(300)))
+        }
+        if r.match("PUT", "devices/current/push-token") != nil {
+            _ = try authenticatedAccount(r)
+            _ = try r.decode(PushTokenRequest.self)
+            return try ok(EmptyResponse())
+        }
 
         // A partir de aquí: residente aprobado.
         if r.match("GET", "home") != nil { return try home(r) }
@@ -240,6 +262,11 @@ actor MockServer {
         }
         if let params = r.match("POST", "visits/:id/decision") { return try decide(r, id: params[0]) }
         if let params = r.match("POST", "visits/:id/sleepover") { return try sleepover(r, id: params[0]) }
+        if r.match("PUT", "visits/:id/activity-token") != nil {
+            try requireAdult(r)
+            _ = try r.decode(ActivityTokenRequest.self)
+            return try ok(EmptyResponse())
+        }
         if r.match("GET", "invitations") != nil {
             try requireResident(r, restrictOwner: true)
             return try ok(invitations)
@@ -265,7 +292,7 @@ actor MockServer {
             return try ok(PackagePolicySetting(policy: packagePolicy))
         }
         if r.match("PUT", "package-policy") != nil {
-            try requireResident(r, restrictOwner: true)
+            try requireAdult(r)
             try verifySignature(r)
             packagePolicy = try r.decode(PackagePolicySetting.self).policy
             return try ok(PackagePolicySetting(policy: packagePolicy))
@@ -301,7 +328,7 @@ actor MockServer {
         }
         if r.match("POST", "emergency-contacts") != nil { return try addContact(r) }
         if let params = r.match("DELETE", "emergency-contacts/:id") {
-            try requireResident(r, restrictOwner: false)
+            try requireAdult(r, restrictOwner: false)
             try verifySignature(r)
             contacts.removeAll { $0.id == params[0] }
             return try ok(EmptyResponse())
@@ -316,6 +343,7 @@ actor MockServer {
             return try ok(WorkPermitEnvelope(permit: workPermit))
         }
         if r.match("POST", "work-permit") != nil { return try requestWorkPermit(r) }
+        if r.match("POST", "residence/tenancy") != nil { return try confirmTenancy(r) }
         if r.match("PATCH", "work-permit") != nil {
             try requireHolder(r)
             guard var permit = workPermit else { throw notFound() }
@@ -612,15 +640,15 @@ actor MockServer {
     }
 
     private func decide(_ r: MockRequest, id: String) throws -> (Int, Data) {
-        let account = try requireResident(r, restrictOwner: true)
-        guard account.profile.role != .minor else {
-            throw MockFailure(403, "NOT_ALLOWED", "Solo los adultos de la vivienda autorizan visitas.")
-        }
+        let account = try requireAdult(r)
         let decision = try r.decode(VisitDecisionRequest.self).decision
         guard let index = visits.firstIndex(where: { $0.id == id }) else { throw notFound() }
         guard visits[index].status == .waiting else {
             let who = visits[index].respondedBy ?? "Otro integrante"
             throw MockFailure(409, "ALREADY_RESPONDED", "\(who) ya respondió a esta visita.")
+        }
+        if decision == .authorize, visits[index].restrictedMatch == .confirmed {
+            throw MockFailure(409, "RESTRICTED_MATCH", "Esta persona coincide con la lista restringida: la administración decide si entra.")
         }
         visits[index].status = decision == .authorize ? .authorized : .rejected
         visits[index].respondedBy = account.profile.firstName
@@ -640,14 +668,14 @@ actor MockServer {
     }
 
     private func sleepover(_ r: MockRequest, id: String) throws -> (Int, Data) {
-        try requireResident(r, restrictOwner: true)
+        try requireAdult(r)
         guard let index = visits.firstIndex(where: { $0.id == id }) else { throw notFound() }
         visits[index].status = .sleepover
         return try ok(visits[index])
     }
 
     private func createInvitation(_ r: MockRequest) throws -> (Int, Data) {
-        try requireResident(r, restrictOwner: true)
+        try requireAdult(r)
         let body = try r.decode(NewInvitationRequest.self)
         guard !body.guestName.trimmingCharacters(in: .whitespaces).isEmpty else {
             throw MockFailure(422, "INVALID_NAME", "Escribe el nombre de tu visita.")
@@ -682,7 +710,7 @@ actor MockServer {
     }
 
     private func createRecurring(_ r: MockRequest) throws -> (Int, Data) {
-        try requireResident(r, restrictOwner: true)
+        try requireAdult(r)
         try verifySignature(r)
         let body = try r.decode(NewRecurringRequest.self)
         guard !body.weekdays.isEmpty else {
@@ -708,7 +736,7 @@ actor MockServer {
     }
 
     private func revokeRecurring(_ r: MockRequest, id: String) throws -> (Int, Data) {
-        try requireResident(r, restrictOwner: true)
+        try requireAdult(r)
         try verifySignature(r)
         guard recurring.contains(where: { $0.id == id }) else { throw notFound() }
         recurring.removeAll { $0.id == id }
@@ -852,7 +880,7 @@ actor MockServer {
     }
 
     private func addContact(_ r: MockRequest) throws -> (Int, Data) {
-        try requireResident(r, restrictOwner: false)
+        try requireAdult(r, restrictOwner: false)
         try verifySignature(r)
         let body = try r.decode(NewEmergencyContactRequest.self)
         let contact = EmergencyContact(
@@ -872,15 +900,37 @@ actor MockServer {
         guard body.departure > body.arrival else {
             throw MockFailure(422, "INVALID_DATES", "La salida debe ser después de la llegada.")
         }
+        let code = String(UUID().uuidString.prefix(4))
         let guest = TemporaryGuest(
             id: "gst-\(UUID().uuidString.prefix(6))",
             name: body.name,
             arrival: body.arrival,
             departure: body.departure,
-            phone: body.phone
+            phone: body.phone,
+            shareURL: URL(string: "https://\(AppInfo.inviteHost)/h/\(code)"),
+            pin: String(format: "%04d", Int.random(in: 0...9_999)),
+            entries: []
         )
         guests.append(guest)
         return try ok(guest, status: 201)
+    }
+
+    /// RF-84: "sigo aquí" queda en revisión de la administración; "me mudo"
+    /// da de baja el acceso en todos los dispositivos de la cuenta (RF-65).
+    private func confirmTenancy(_ r: MockRequest) throws -> (Int, Data) {
+        let index = try authenticatedIndex(r)
+        try verifySignature(r)
+        let decision = try r.decode(TenancyConfirmationRequest.self).decision
+        switch decision {
+        case .stay:
+            persistent.accounts[index].profile.tenancyRenewalRequested = true
+        case .leave:
+            persistent.accounts[index].profile.residence = nil
+            persistent.accounts[index].profile.approvalStatus = .unregistered
+            persistent.revokedDeviceIds.formUnion(persistent.accounts[index].devices.map(\.id))
+        }
+        save()
+        return try ok(currentProfile(index))
     }
 
     private func requestWorkPermit(_ r: MockRequest) throws -> (Int, Data) {
@@ -949,6 +999,17 @@ actor MockServer {
             throw MockFailure(403, "RENTED_HOME", "Mientras la vivienda esté rentada, el arrendatario autoriza las visitas y ve la bitácora.")
         }
         return persistent.accounts[index]
+    }
+
+    /// El menor solo abre la pluma para su paso y usa su QR: no autoriza
+    /// visitas, no invita ni cambia accesos de la vivienda.
+    @discardableResult
+    private func requireAdult(_ r: MockRequest, restrictOwner: Bool = true) throws -> MockAccount {
+        let account = try requireResident(r, restrictOwner: restrictOwner)
+        guard account.profile.role != .minor else {
+            throw MockFailure(403, "MINOR_NOT_ALLOWED", "Solo los adultos de la vivienda pueden hacer esto.")
+        }
+        return account
     }
 
     @discardableResult

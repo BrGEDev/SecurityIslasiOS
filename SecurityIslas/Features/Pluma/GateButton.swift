@@ -97,6 +97,7 @@ struct GateHeroCard: View {
         }
         .accessibilityElement(children: .combine)
         .accessibilityHint(look.isActionable ? "Pide Face ID." : "")
+        .accessibilityIdentifier("boton-pluma")
     }
 
     private func actionCircle(_ look: Appearance) -> some View {

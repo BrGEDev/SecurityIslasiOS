@@ -43,10 +43,12 @@ struct AccountView: View {
             }
 
             Section {
-                if !profile.isRestrictedOwner {
+                if !profile.isRestrictedOwner && !profile.isMinor {
                     row(.family, icon: "person.2.fill", tint: .blue, title: "Familia", value: summary.family)
                 }
-                row(.contacts, icon: "heart.fill", tint: .pink, title: "Contactos de emergencia", value: summary.contacts)
+                if !profile.isMinor {
+                    row(.contacts, icon: "heart.fill", tint: .pink, title: "Contactos de emergencia", value: summary.contacts)
+                }
                 row(.devices, icon: "iphone", tint: .gray, title: "Dispositivos", value: summary.devices)
             }
 
@@ -57,7 +59,7 @@ struct AccountView: View {
                 }
             }
 
-            if !profile.isRestrictedOwner {
+            if profile.canAuthorizeVisits {
                 Section("Paquetería") {
                     row(.packagePolicy, icon: "shippingbox.fill", tint: .indigo, title: "Cuando llegue un paquete", value: summary.packagePolicy)
                     row(.packages, icon: "tray.full.fill", tint: .teal, title: "Paquetes en caseta", value: nil)
@@ -150,7 +152,7 @@ struct AccountView: View {
                 summary.workPermit = nil
             }
         }
-        if !profile.isRestrictedOwner, let policy = try? await container.visits.packagePolicy() {
+        if profile.canAuthorizeVisits, let policy = try? await container.visits.packagePolicy() {
             summary.packagePolicy = policy.shortTitle
         }
     }

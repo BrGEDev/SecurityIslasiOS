@@ -10,6 +10,7 @@ import SwiftUI
 struct RootView: View {
     @Environment(AppContainer.self) private var container
     @Environment(SessionStore.self) private var session
+    @Environment(\.scenePhase) private var scenePhase
 
     var body: some View {
         Group {
@@ -34,6 +35,9 @@ struct RootView: View {
         .animation(.easeInOut(duration: 0.25), value: session.state)
         .task {
             await session.bootstrap()
+        }
+        .onChange(of: scenePhase) { _, phase in
+            if phase == .active { session.checkDeviceKey() }
         }
     }
 }

@@ -144,6 +144,15 @@ struct FaceIDSetupView: View {
     var body: some View {
         ScrollView {
             VStack(spacing: 24) {
+                if let notice = session.keyResetNotice {
+                    Label(notice, systemImage: "exclamationmark.lock.fill")
+                        .font(.subheadline)
+                        .foregroundStyle(.orange)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                        .padding()
+                        .cardBackground()
+                }
+
                 Image(systemName: container.biometrics.biometryIcon)
                     .font(.system(size: 44))
                     .foregroundStyle(Color.accentColor)
@@ -178,9 +187,9 @@ struct FaceIDSetupView: View {
         .readableContentWidth()
         .safeAreaInset(edge: .bottom) {
             BottomActionBar {
-                AsyncButton("Activar \(biometryName)") { await activate() }
+                AsyncButton("Activar \(biometryName)") { await activate(usingPasscode: false) }
                     .buttonStyle(.islasPrimary)
-                AsyncButton("Usar el código del iPhone") { await activate() }
+                AsyncButton("Usar el código del iPhone") { await activate(usingPasscode: true) }
             }
         }
     }
@@ -196,10 +205,10 @@ struct FaceIDSetupView: View {
         .padding(14)
     }
 
-    private func activate() async {
+    private func activate(usingPasscode: Bool) async {
         errorMessage = nil
         do {
-            _ = try await container.devices.registerThisDevice()
+            _ = try await container.devices.registerThisDevice(usingPasscode: usingPasscode)
             session.completeSetup()
         } catch {
             errorMessage = error.userMessage

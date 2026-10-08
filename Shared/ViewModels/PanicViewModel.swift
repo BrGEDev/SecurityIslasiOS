@@ -46,6 +46,11 @@ final class PanicViewModel {
     private let gate: GateConfiguration
     private var countdownTask: Task<Void, Never>?
     private var trackingTask: Task<Void, Never>?
+    private var locationTask: Task<Void, Never>?
+
+    /// Supuesto: estado cada 3 s y ubicación cada 10 s (DECISIONES.md).
+    static let statusInterval: Duration = .seconds(3)
+    static let locationInterval: TimeInterval = 10
 
     init(
         entry: PanicEntry,
@@ -72,6 +77,9 @@ final class PanicViewModel {
         if let coordinate = try? await location.currentCoordinate() {
             self.coordinate = coordinate
             insidePerimeter = coordinate.distance(to: gate.perimeterCenter) <= gate.perimeterRadius
+        } else if let inside = location.isInsidePerimeter {
+            // Sin posición precisa: usa el último estado de la geocerca (CLMonitor).
+            insidePerimeter = inside
         }
         if case .countdown = stage { startCountdown() }
     }
@@ -94,8 +102,13 @@ final class PanicViewModel {
 
     func cancel() {
         countdownTask?.cancel()
-        trackingTask?.cancel()
+        stopTracking()
         didFinish = true
+    }
+
+    private func stopTracking() {
+        trackingTask?.cancel()
+        locationTask?.cancel()
     }
 
     func retry() async {
@@ -122,22 +135,30 @@ final class PanicViewModel {
     }
 
     /// Consulta el estado y manda la ubicación mientras la alerta siga abierta.
-    /// Supuesto: cada 3 s el estado y cada 10 s la ubicación (DECISIONES.md).
-    /// Con la app en segundo plano hará falta CLBackgroundActivitySession.
+    /// La ubicación sale de `trackCoordinates()`, que mantiene una
+    /// `CLBackgroundActivitySession`: sigue enviándose con la app en segundo
+    /// plano o con la pantalla bloqueada (requiere el permiso "Siempre" si la
+    /// app deja de estar visible por mucho tiempo).
     private func startTracking() {
-        trackingTask?.cancel()
+        stopTracking()
         trackingTask = Task { [weak self] in
-            var tick = 0
             while !Task.isCancelled {
-                try? await Task.sleep(for: .seconds(3))
+                try? await Task.sleep(for: PanicViewModel.statusInterval)
                 guard let self, let alert = self.alert, alert.status != .closed else { return }
                 if let updated = try? await self.repository.status(of: alert) {
                     self.alert = updated
                 }
-                tick += 1
-                if tick % 3 == 0, let coordinate = try? await self.location.currentCoordinate() {
-                    try? await self.repository.updateLocation(coordinate, for: alert)
-                }
+            }
+        }
+        let stream = location.trackCoordinates()
+        locationTask = Task { [weak self] in
+            var lastSent = Date.distantPast
+            for await coordinate in stream {
+                guard let self, let alert = self.alert, alert.status != .closed else { return }
+                self.coordinate = coordinate
+                guard Date.now.timeIntervalSince(lastSent) >= PanicViewModel.locationInterval else { continue }
+                lastSent = .now
+                try? await self.repository.updateLocation(coordinate, for: alert)
             }
         }
     }
@@ -152,7 +173,7 @@ final class PanicViewModel {
         defer { isClosing = false }
         do {
             self.alert = try await repository.close(alert)
-            trackingTask?.cancel()
+            stopTracking()
             didFinish = true
         } catch BiometricError.canceled {
             return

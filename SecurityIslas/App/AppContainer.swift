@@ -16,6 +16,10 @@ import UIKit
 
 @Observable
 final class AppContainer {
+    /// Una sola instancia por proceso: la usan la app y los App Intents, que
+    /// pueden ejecutarse sin que aparezca ninguna vista.
+    static let shared = AppContainer()
+
     let session: SessionStore
     let location: LocationService
     let notifications: NotificationManager
@@ -31,6 +35,12 @@ final class AppContainer {
     let panic: PanicRepository
     let household: HouseholdRepository
     let residentQR: ResidentQRGenerator
+    /// Token de APNs de este iPhone.
+    let push: PushRegistrar
+    /// Caché sin red (SwiftData) de visitas, recurrentes, invitaciones e historial.
+    let offlineCache: OfflineCache
+    /// Live Activity de las visitas en caseta (pantallas 11 y 12).
+    let liveActivities: VisitActivityController
 
     /// Solo existe con el backend mock (menú Cuenta > Simulación).
     let mockServer: MockServer?
@@ -43,8 +53,27 @@ final class AppContainer {
     /// Código de invitación recibido por enlace (Universal Link).
     var pendingInviteCode: String?
 
+    /// Visita que hay que mostrar porque se tocó su aviso.
+    var visitToOpen: String?
+
+    /// Pedidos de Siri, widgets y controles para la interfaz.
+    var panicRequest: PanicEntry?
+    var tabRequest: MainTab?
+    /// Abrir pluma desde un widget, control o complicación (pide Face ID).
+    var gateRequest = false
+
     init(useMockBackend: Bool = AppInfo.usesMockBackend) {
         let keychain = KeychainStore.app
+        // Pruebas de UI (`-uiTesting YES`): empiezan sin sesión y con el
+        // backend de prueba recién sembrado.
+        if useMockBackend, UserDefaults.standard.bool(forKey: "uiTesting") {
+            UserDefaults.standard.removeObject(forKey: MockSettings.stateKey)
+            for key in ["session.tokens", "session.profile", "resident.qr.seed"] {
+                keychain.delete(key)
+            }
+            DeviceKeyManager(keychain: keychain).deleteKey()
+            UserDefaults.standard.set(SimulatedPosition.nearResidentsLane.rawValue, forKey: "mock.simulatedPosition")
+        }
         let deviceId = DeviceIdentity.identifier(in: keychain)
         let descriptor = DeviceDescriptor(
             id: deviceId,
@@ -93,9 +122,15 @@ final class AppContainer {
             signer: signer,
             keys: keys,
             biometrics: biometrics,
-            descriptor: descriptor
+            descriptor: descriptor,
+            attester: AppAttester(client: client, keychain: keychain)
         )
-        let visits = RemoteVisitsRepository(client: client, signer: signer)
+        let offlineCache = OfflineCache()
+        self.offlineCache = offlineCache
+        let visits = CachedVisitsRepository(
+            remote: RemoteVisitsRepository(client: client, signer: signer),
+            cache: offlineCache
+        )
         self.visits = visits
         let gate = RemoteGateRepository(client: client, signer: signer)
         self.gate = gate
@@ -103,6 +138,10 @@ final class AppContainer {
         household = RemoteHouseholdRepository(client: client, signer: signer)
         let residentQR = ResidentQRGenerator(repository: gate, keychain: keychain)
         self.residentQR = residentQR
+        let push = PushRegistrar(devices: devices)
+        self.push = push
+        let liveActivities = VisitActivityController(visits: visits, push: push)
+        self.liveActivities = liveActivities
 
         // Servicios
         location = LocationService(usesSimulation: useMockBackend)
@@ -120,6 +159,10 @@ final class AppContainer {
 
         session.onSignOut = {
             residentQR.clear()
+            push.sessionDidChange(userId: nil)
+            offlineCache.clear()
+            liveActivities.endAll()
+            WidgetSnapshotStore.clear()
             // El reloj usa su propia sesión, pero al cerrar la del iPhone
             // también se desvincula para no dejarlo abierto sin querer.
             watch.sendIfPossible(.unlinked)
@@ -140,6 +183,32 @@ final class AppContainer {
             }
             self?.dataDidChange()
         }
+        visits.onDecision = { [weak self] visit, decision in
+            NotificationManager.withdraw(visitId: visit.id)
+            self?.liveActivities.end(
+                visitId: visit.id,
+                phase: decision == .authorize ? .authorized : .rejected,
+                respondedBy: visit.respondedBy
+            )
+        }
+        // Botones de la Live Activity y del widget: corren en este proceso.
+        VisitDecisionHandler.decide = { [weak self] visitId, decision in
+            do {
+                _ = try await visits.decide(visitId, decision: decision)
+            } catch {
+                // Ya respondió otro (409) o falló la red: se avisa y se cierra.
+                self?.liveActivities.end(visitId: visitId, phase: .noResponse, respondedBy: nil, dismissImmediately: true)
+                self?.notifications.notify(title: "No se aplicó tu respuesta", body: error.userMessage ?? "Ocurrió un error inesperado")
+            }
+            self?.dataDidChange()
+        }
+        liveActivities.observePushToStartToken()
+        notifications.openHandler = { [weak self] visitId in
+            self?.visitToOpen = visitId
+        }
+        notifications.presentHandler = { [weak self] push in
+            self?.handleRemote(push)
+        }
     }
 
     var usesMockBackend: Bool { mockServer != nil }
@@ -148,8 +217,83 @@ final class AppContainer {
         dataVersion += 1
     }
 
+    /// Push recibido con la app abierta o en segundo plano (incluye los
+    /// silenciosos). Regresa si hubo datos nuevos.
+    @discardableResult
+    func handleRemote(_ push: RemotePush) -> Bool {
+        switch push {
+        case .pendingVisit, .visitInfo:
+            dataDidChange()
+            return true
+        case .visitResponded(let visitId, let visitName, let decision, let respondedBy):
+            // Otro integrante respondió primero (RF-06): el aviso ya no sirve
+            // y se avisa quién respondió.
+            NotificationManager.withdraw(visitId: visitId)
+            liveActivities.end(
+                visitId: visitId,
+                phase: decision == .authorize ? .authorized : decision == .reject ? .rejected : .noResponse,
+                respondedBy: respondedBy
+            )
+            if let respondedBy, let decision {
+                let verb = decision == .authorize ? "autorizó" : "rechazó"
+                notifications.notify(
+                    title: "\(respondedBy) ya respondió",
+                    body: "\(respondedBy) \(verb) \(visitName.map { "a \($0)" } ?? "la visita")."
+                )
+            }
+            dataDidChange()
+            return true
+        case .unknown:
+            return false
+        }
+    }
+
+    /// Lo que se acaba de cargar en Inicio: alimenta los widgets y las Live
+    /// Activities de las visitas en caseta.
+    func publishHome(_ summary: HomeSummary, profile: UserProfile, gate: GateButtonState) {
+        let snapshotGate: WidgetSnapshot.GateState
+        var distance: Int?
+        switch gate {
+        case .ready(let lane, let meters):
+            snapshotGate = lane.type == .residentsOnly ? .open : .requestPass
+            distance = meters
+        case .far(let meters):
+            snapshotGate = .far
+            distance = meters
+        default:
+            snapshotGate = .unavailable
+        }
+        let pending = profile.canAuthorizeVisits ? summary.pendingVisits : []
+        WidgetSnapshotStore.save(WidgetSnapshot(
+            fraccionamiento: profile.residence?.fraccionamientoName ?? AppInfo.name,
+            pending: pending.map {
+                WidgetSnapshot.PendingVisit(
+                    id: $0.id, name: $0.name, initials: $0.initials, kind: $0.kind,
+                    arrivedAt: $0.arrivedAt, respondBy: $0.responseDeadline,
+                    heldByAdministration: $0.isHeldByAdministration
+                )
+            },
+            gate: profile.canUseGate ? snapshotGate : .unavailable,
+            distance: distance,
+            canAuthorizeVisits: profile.canAuthorizeVisits,
+            canUseGate: profile.canUseGate,
+            updatedAt: .now
+        ))
+        liveActivities.sync(pending: pending, residence: profile.residence?.name ?? "tu vivienda")
+    }
+
     /// `https://acceso.app/i/7KX2` → "7KX2"
+    /// `islassecurity://gate|panic|qr|visits` (widgets, controles y complicaciones)
     func handle(url: URL) {
+        if let link = AppLink(url: url) {
+            switch link {
+            case .gate: gateRequest = true
+            case .panic: panicRequest = .hold
+            case .qr: tabRequest = .qr
+            case .visits: tabRequest = .visits
+            }
+            return
+        }
         let parts = url.pathComponents.filter { $0 != "/" }
         if parts.count == 2, parts[0] == "i" || parts[0] == "invite" {
             pendingInviteCode = parts[1]

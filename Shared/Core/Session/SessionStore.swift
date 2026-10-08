@@ -30,6 +30,8 @@ final class SessionStore {
     private(set) var state: SessionState = .launching
     /// Mensaje para la pantalla de bienvenida (ej. "Tu sesión expiró").
     var notice: String?
+    /// Por qué se pide de nuevo Face ID (cambiaron las caras o huellas).
+    var keyResetNotice: String?
 
     private let auth: AuthRepository
     private let tokenStore: any TokenStore
@@ -38,6 +40,7 @@ final class SessionStore {
     private let keychain: KeychainStore
     private let events: SessionEventBus
     @ObservationIgnored private var eventsTask: Task<Void, Never>?
+    @ObservationIgnored private var bootstrapTask: Task<Void, Never>?
     @ObservationIgnored var onSignOut: (() -> Void)?
 
     private let profileKey = "session.profile"
@@ -68,7 +71,27 @@ final class SessionStore {
 
     // MARK: - Arranque
 
+    /// Idempotente: la raíz de la app y los App Intents (que pueden arrancar la
+    /// app sin interfaz) esperan el mismo arranque.
     func bootstrap() async {
+        if let bootstrapTask {
+            await bootstrapTask.value
+            return
+        }
+        let task = Task { await performBootstrap() }
+        bootstrapTask = task
+        await task.value
+    }
+
+    /// Perfil con sesión activa para Siri, widgets y controles; `nil` si no hay
+    /// sesión, el alta está pendiente o falta la llave del dispositivo.
+    func activeProfile() async -> UserProfile? {
+        await bootstrap()
+        if case .active(let profile) = state { return profile }
+        return nil
+    }
+
+    private func performBootstrap() async {
         listenToSessionEvents()
 
         guard await tokenStore.tokens() != nil else {
@@ -111,10 +134,18 @@ final class SessionStore {
     func completeSetup() {
         guard let profile else { return }
         UserDefaults.standard.set(true, forKey: setupKeyPrefix + profile.id)
+        keyResetNotice = nil
         state = .active(profile)
     }
 
     func update(_ profile: UserProfile) {
+        route(profile, returningUser: true)
+    }
+
+    /// Al volver a primer plano: si cambiaron las caras o huellas registradas,
+    /// la llave (`.biometryCurrentSet`) ya no firma y se pide Face ID de nuevo.
+    func checkDeviceKey() {
+        guard case .active(let profile) = state, keys.isInvalidatedByBiometryChange else { return }
         route(profile, returningUser: true)
     }
 
@@ -135,6 +166,11 @@ final class SessionStore {
         case .pending, .rejected:
             state = .pendingApproval(profile)
         case .approved:
+            if keys.isInvalidatedByBiometryChange {
+                keys.deleteKey()
+                biometrics.invalidate()
+                keyResetNotice = DeviceKeyError.biometryChanged.errorDescription
+            }
             let setupDone = UserDefaults.standard.bool(forKey: setupKeyPrefix + profile.id)
             if setupDone && keys.hasKey {
                 state = .active(profile)

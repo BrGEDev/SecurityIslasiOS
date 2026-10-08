@@ -10,6 +10,8 @@
 //  • 222 999 9999 → cuenta existente con 3 dispositivos (pantalla 3b)
 //  • 222 555 0000 → precargado por la administración (RF-63)
 //  • 551 234 5678 → Laura, propietaria no residente (pantalla 38)
+//  • 222 777 0000 → Diego, menor: solo su QR y la pluma para su paso
+//  • 222 888 0000 → Sofía, arrendataria con el contrato por terminar (RF-84)
 //  • cualquier otro → residente nuevo (pantallas 4, 5, 6; se aprueba a los ~12 s)
 //
 
@@ -125,6 +127,47 @@ nonisolated enum MockSeed {
                 state: .existing,
                 devices: []
             ),
+            // Arrendataria titular: su contrato termina en 5 días (RF-84).
+            MockAccount(
+                phones: ["+522228880000"],
+                profile: UserProfile(
+                    id: "usr-sofia",
+                    firstName: "Sofía",
+                    lastName: "Ramírez",
+                    phone: "+522228880000",
+                    role: .holder,
+                    tenure: .tenant,
+                    residence: Residence(
+                        id: "frac-bosques-sanctorum-31",
+                        name: "Retorno Encino 31",
+                        fraccionamientoId: bosques.id,
+                        fraccionamientoName: bosques.name,
+                        isRented: true
+                    ),
+                    approvalStatus: .approved,
+                    rejectionReason: nil,
+                    contractEndsOn: Calendar.current.startOfDay(for: now).addingTimeInterval(5 * 86_400)
+                ),
+                state: .existing,
+                devices: []
+            ),
+            // Integrante menor de la casa de Brandon: su QR y su paso.
+            MockAccount(
+                phones: ["+522227770000"],
+                profile: UserProfile(
+                    id: "usr-diego",
+                    firstName: "Diego",
+                    lastName: "García",
+                    phone: "+522227770000",
+                    role: .minor,
+                    tenure: nil,
+                    residence: brandonResidence,
+                    approvalStatus: .approved,
+                    rejectionReason: nil
+                ),
+                state: .existing,
+                devices: []
+            ),
         ]
     }
 
@@ -172,6 +215,10 @@ nonisolated enum MockSeed {
         return [
             Visit(id: "vis-juan", kind: .visit, name: "Juan Pérez", plate: "TXR-12-34", origin: .walkIn, status: .waiting,
                   arrivedAt: now.addingTimeInterval(-20)),
+            // Servicio a varias viviendas (RF-71) con posible coincidencia (RF-86).
+            Visit(id: "vis-pipa", kind: .service, name: "Pipa Aguas del Valle", company: "Aguas del Valle", plate: "PUE-31-07",
+                  origin: .walkIn, status: .waiting, arrivedAt: now.addingTimeInterval(-5), destinationCount: 3,
+                  restrictedMatch: .possible),
             Visit(id: "vis-gas", kind: .service, name: "Gas Express", company: "Gas Express", origin: .walkIn, status: .exited,
                   arrivedAt: today.addingTimeInterval(10 * 3_600 + 30 * 60),
                   enteredAt: today.addingTimeInterval(10 * 3_600 + 32 * 60),
@@ -303,14 +350,23 @@ nonisolated enum MockSeed {
         let submitted = calendar.date(from: DateComponents(year: 2026, month: 9, day: 28)) ?? now
         return WorkPermit(
             id: "wp-1",
-            status: .inReview,
+            // Aprobado para poder ver las entradas de hoy y los avisos (RF-89).
+            status: .approved,
             responsible: "Arq. Mario Luna · DRO",
             license: "LC-2026-0418",
             startsOn: start,
             endsOn: end,
             schedule: "L a V 8:00 a 18:00 · S 8:00 a 14:00",
             dailySummary: true,
-            submittedAt: submitted
+            submittedAt: submitted,
+            todayEntries: [
+                WorkEntry(id: "we-1", name: "Pedro Hernández", enteredAt: calendar.startOfDay(for: now).addingTimeInterval(8 * 3_600 + 5 * 60),
+                          outsideSchedule: false),
+                WorkEntry(id: "we-2", name: "José Martínez", enteredAt: calendar.startOfDay(for: now).addingTimeInterval(8 * 3_600 + 12 * 60),
+                          outsideSchedule: false, restrictedMatch: .possible),
+                WorkEntry(id: "we-3", name: "Raúl Gómez", enteredAt: calendar.startOfDay(for: now).addingTimeInterval(6 * 3_600 + 40 * 60),
+                          outsideSchedule: true),
+            ]
         )
     }
 }

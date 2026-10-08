@@ -104,6 +104,10 @@ nonisolated struct UserProfile: Codable, Sendable, Hashable, Identifiable {
     var residence: Residence?
     var approvalStatus: ApprovalStatus
     var rejectionReason: String?
+    /// Fin del contrato de arrendamiento que fijó la administración (RF-84).
+    var contractEndsOn: Date? = nil
+    /// Ya confirmó que sigue viviendo ahí; la administración revisa la nueva fecha.
+    var tenancyRenewalRequested: Bool? = nil
 
     var fullName: String { "\(firstName) \(lastName)".trimmingCharacters(in: .whitespaces) }
 
@@ -116,6 +120,37 @@ nonisolated struct UserProfile: Codable, Sendable, Hashable, Identifiable {
     var isRestrictedOwner: Bool {
         role == .nonResidentOwner && (residence?.isRented ?? false)
     }
+
+    var isMinor: Bool { role == .minor }
+
+    /// Autoriza o rechaza visitas, invita y administra recurrentes y paquetería.
+    /// El menor solo abre la pluma (o solicita paso) para su propio paso y usa
+    /// su QR (decisión de Brandon, ver DECISIONES.md).
+    var canAuthorizeVisits: Bool { !isMinor && !isRestrictedOwner }
+
+    /// Botón de apertura / solicitud de paso (RF-23). El propietario no residente
+    /// entra con su QR y no usa el botón (RF-87); el menor sí, solo para su paso.
+    var canUseGate: Bool { role != .nonResidentOwner }
+
+    /// Arrendatario titular cuyo contrato termina en 7 días o menos (o ya
+    /// terminó): se le pide confirmar si sigue o dar de baja el acceso (RF-84).
+    /// Supuesto: aviso con 7 días de anticipación.
+    func needsTenancyConfirmation(now: Date = .now) -> Bool {
+        guard tenure == .tenant, role == .holder, tenancyRenewalRequested != true,
+              let contractEndsOn else { return false }
+        return contractEndsOn.timeIntervalSince(now) <= 7 * 86_400
+    }
+}
+
+nonisolated enum TenancyDecision: String, Codable, Sendable {
+    /// Sigue viviendo ahí: la administración actualiza la fecha.
+    case stay
+    /// Se muda: pierde el acceso en todos sus dispositivos (RF-65).
+    case leave
+}
+
+nonisolated struct TenancyConfirmationRequest: Codable, Sendable {
+    let decision: TenancyDecision
 }
 
 nonisolated enum Initials {

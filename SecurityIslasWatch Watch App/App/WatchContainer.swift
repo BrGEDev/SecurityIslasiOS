@@ -37,6 +37,8 @@ final class WatchContainer {
     private(set) var linkState: LinkState = .idle
     /// Sube cuando cambian datos fuera de la pantalla actual.
     private(set) var dataVersion = 0
+    /// Complicación tocada (pluma, pánico o Mi QR); la atiende la pantalla principal.
+    var linkRequest: AppLink?
 
     private let auth: AuthRepository
     private let keys: DeviceKeyManager

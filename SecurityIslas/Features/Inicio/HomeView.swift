@@ -45,8 +45,19 @@ struct HomeView: View {
                         .padding(.horizontal, 4)
                 }
 
+                if let date = container.offlineCache.showingDataFrom {
+                    Label("Sin conexión · datos de \(date.relativeDayAndTime)", systemImage: "wifi.slash")
+                        .font(.footnote.weight(.medium))
+                        .foregroundStyle(.secondary)
+                        .padding(.horizontal, 4)
+                }
+
                 AdaptiveColumns(spacing: 24) {
-                    if let visit = model.pendingVisit {
+                    if profile.needsTenancyConfirmation() {
+                        TenancyCard(profile: profile)
+                    }
+
+                    if profile.canAuthorizeVisits, let visit = model.pendingVisit {
                         LiveVisitCard(
                             visit: visit,
                             extraCount: model.extraPendingCount,
@@ -65,7 +76,9 @@ struct HomeView: View {
                     QuickActionsGrid(items: quickActions)
                         .padding(.top, 4)
                 } trailing: {
-                    todaySection
+                    if profile.canAuthorizeVisits {
+                        todaySection
+                    }
                 }
             }
             .padding(.horizontal)
@@ -98,6 +111,19 @@ struct HomeView: View {
         .task(id: container.dataVersion) {
             await model.load()
             router.gateConfiguration = model.summary?.gate
+            if let summary = model.summary {
+                container.location.monitorGeofences(summary.gate)
+                container.publishHome(summary, profile: profile, gate: model.gate.state)
+            }
+        }
+        .onChange(of: container.gateRequest, initial: true) { _, requested in
+            // Widget, control o complicación: mismas reglas y Face ID que el botón.
+            guard requested else { return }
+            container.gateRequest = false
+            Task {
+                await model.load()
+                await model.gate.trigger()
+            }
         }
         .onChange(of: scenePhase) { _, phase in
             if phase == .active { Task { await model.load() } }
@@ -111,7 +137,15 @@ struct HomeView: View {
     }
 
     private var quickActions: [QuickActionItem] {
-        [
+        // El menor solo usa su QR y la pluma para su paso.
+        guard profile.canAuthorizeVisits else {
+            return [
+                QuickActionItem(id: "qr", title: "Mi QR", systemImage: "qrcode", tint: .indigo) {
+                    router.selectedTab = .qr
+                },
+            ]
+        }
+        return [
             QuickActionItem(id: "invite", title: "Invitar", systemImage: "person.crop.circle.badge.plus", tint: .blue) {
                 router.showNewInvitation = true
             },
@@ -178,6 +212,76 @@ struct HomeView: View {
         } else {
             ActivityTimeline(visits: today)
                 .redacted(reason: isLoading ? .placeholder : [])
+        }
+    }
+}
+
+/// Fin de contrato del arrendatario (RF-84): al llegar la fecha que fijó la
+/// administración, pide confirmar que sigue en la vivienda o dar de baja el
+/// acceso. Las dos respuestas son cambios de cuenta: se firman.
+private struct TenancyCard: View {
+    let profile: UserProfile
+
+    @Environment(AppContainer.self) private var container
+    @Environment(SessionStore.self) private var session
+    @State private var confirmLeave = false
+    @State private var errorMessage: String?
+
+    private var endsText: String {
+        guard let end = profile.contractEndsOn else { return "" }
+        let day = end.formatted(.dateTime.weekday(.wide).day().month(.wide).locale(.app))
+        return end < .now ? "Tu contrato terminó el \(day)." : "Tu contrato termina el \(day)."
+    }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Label {
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("¿Sigues viviendo aquí?").font(.headline)
+                    Text("\(endsText) Confírmalo para no perder el acceso, o da de baja tu acceso si te mudas.")
+                        .font(.subheadline)
+                        .foregroundStyle(.secondary)
+                }
+            } icon: {
+                Image(systemName: "calendar.badge.exclamationmark")
+                    .foregroundStyle(.orange)
+            }
+
+            HStack(spacing: 10) {
+                AsyncButton("Sigo aquí") { await confirm(.stay) }
+                    .buttonStyle(.borderedProminent)
+                Button("Me mudo") { confirmLeave = true }
+                    .buttonStyle(.bordered)
+                    .tint(.red)
+            }
+            .buttonBorderShape(.capsule)
+        }
+        .padding()
+        .frame(maxWidth: .infinity, alignment: .leading)
+        .cardBackground()
+        .alert("¿Dar de baja tu acceso?", isPresented: $confirmLeave) {
+            Button("Dar de baja", role: .destructive) {
+                Task { await confirm(.leave) }
+            }
+            Button("Cancelar", role: .cancel) {}
+        } message: {
+            Text("Dejarás de abrir la pluma y de recibir avisos en todos tus dispositivos.")
+        }
+        .errorAlert($errorMessage)
+    }
+
+    private func confirm(_ decision: TenancyDecision) async {
+        do {
+            let updated = try await container.household.confirmTenancy(decision)
+            if decision == .leave {
+                await session.signOut()
+            } else {
+                session.update(updated)
+            }
+        } catch BiometricError.canceled {
+            return
+        } catch {
+            errorMessage = error.userMessage
         }
     }
 }

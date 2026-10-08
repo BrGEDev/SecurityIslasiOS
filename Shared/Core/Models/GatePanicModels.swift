@@ -5,6 +5,7 @@
 //  Pluma (decisión I-01), Mi QR, pánico y datos de la vivienda.
 //
 
+import CoreLocation
 import Foundation
 
 // MARK: - Ubicación
@@ -23,6 +24,10 @@ nonisolated struct Coordinate: Codable, Sendable, Hashable {
         let a = sin(deltaLat / 2) * sin(deltaLat / 2)
             + cos(lat1) * cos(lat2) * sin(deltaLon / 2) * sin(deltaLon / 2)
         return earthRadius * 2 * atan2(sqrt(a), sqrt(1 - a))
+    }
+
+    var clCoordinate: CLLocationCoordinate2D {
+        CLLocationCoordinate2D(latitude: latitude, longitude: longitude)
     }
 
     /// Punto desplazado `meters` hacia el norte.
@@ -153,7 +158,7 @@ nonisolated struct FamilyMember: Codable, Sendable, Hashable, Identifiable {
         switch role {
         case .holder: isCurrentUser ? "Titular · tú" : "Titular"
         case .adult: "Adulto · autoriza visitas"
-        case .minor: "Menor · solo su QR"
+        case .minor: "Menor · su QR y su paso"
         case .nonResidentOwner: "Propietario"
         }
     }
@@ -182,12 +187,30 @@ nonisolated struct NewEmergencyContactRequest: Codable, Sendable {
     let phone: String
 }
 
+/// Huésped temporal (RF-92): entra con su propio QR durante la estancia, el
+/// titular recibe aviso de cada entrada y el acceso vence solo.
 nonisolated struct TemporaryGuest: Codable, Sendable, Hashable, Identifiable {
     let id: String
     let name: String
     let arrival: Date
     let departure: Date
     let phone: String
+    /// Enlace a la página con su QR dinámico y PIN (como una invitación).
+    var shareURL: URL?
+    var pin: String?
+    var entries: [EntryLog]?
+
+    nonisolated enum Stage: Sendable {
+        case upcoming
+        case staying
+        case finished
+    }
+
+    func stage(at date: Date = .now) -> Stage {
+        if date < arrival { return .upcoming }
+        if date > departure { return .finished }
+        return .staying
+    }
 }
 
 nonisolated struct NewGuestRequest: Codable, Sendable {
@@ -213,6 +236,22 @@ nonisolated struct WorkPermit: Codable, Sendable, Hashable {
     let schedule: String
     var dailySummary: Bool
     let submittedAt: Date
+    /// Entradas de hoy de la cuadrilla (RF-88). El resumen diario y los avisos
+    /// inmediatos los manda el backend por push (RF-89).
+    var todayEntries: [WorkEntry]?
+}
+
+/// Trabajador registrado por el guardia al entrar (RF-88).
+nonisolated struct WorkEntry: Codable, Sendable, Hashable, Identifiable {
+    let id: String
+    let name: String
+    let enteredAt: Date
+    var exitedAt: Date?
+    /// Entró fuera del horario de obra: siguió el flujo normal de visita y se
+    /// avisó de inmediato al dueño (RF-89).
+    var outsideSchedule: Bool
+    /// Coincidencia con la lista restringida (RF-77, RF-89).
+    var restrictedMatch: RestrictedMatch?
 }
 
 nonisolated struct WorkPermitRequest: Codable, Sendable {

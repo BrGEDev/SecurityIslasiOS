@@ -68,6 +68,7 @@ struct VerificationCodeInputView: View {
                 .focused($isFocused)
                 .opacity(0.01)
                 .accessibilityLabel("Código de verificación")
+                .accessibilityIdentifier("codigo-sms")
                 .onChange(of: code) { _, newValue in
                     let filtered = String(newValue.filter(\.isNumber).prefix(codeLength))
                     if filtered != newValue {

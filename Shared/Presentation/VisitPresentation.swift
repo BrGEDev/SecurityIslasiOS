@@ -57,7 +57,7 @@ extension Visit {
         case .waiting: "En caseta"
         case .authorized: respondedBy.map { "Autorizó \($0)" } ?? "Autorizada"
         case .rejected: respondedBy.map { "Rechazó \($0)" } ?? "Rechazada"
-        case .noResponse: "Sin respuesta"
+        case .noResponse: "Sin respuesta · no entró"
         case .entered: enteredAt.map { "Entró \($0.formatted(.dateTime.hour().minute().locale(.app)))" } ?? "Entró"
         case .exited: respondedBy.map { "Autorizó \($0)" } ?? "Salió"
         case .scheduled: "Por llegar"
@@ -75,6 +75,23 @@ extension Visit {
         case .scheduled: .blue
         case .sleepover, .canceled, .expired: .gray
         }
+    }
+
+    /// Aviso de la lista restringida (RF-86).
+    var restrictedNotice: String? {
+        switch restrictedMatch {
+        case .possible: "Posible coincidencia con la lista restringida. El guardia revisa la identificación."
+        case .confirmed: "Coincide con la lista restringida. La administración decide si entra; tu autorización no basta."
+        case nil: nil
+        }
+    }
+
+    /// Qué pasa si nadie responde (RF-04): escalamiento y "sin respuesta".
+    func escalationText(at date: Date) -> String {
+        guard let deadline = responseDeadline, date < deadline else {
+            return "Te escribimos por WhatsApp y te llamamos. Si nadie de tu casa responde, queda sin respuesta y no entra."
+        }
+        return "Si no respondes, te escribimos por WhatsApp y te llamamos. Nunca entra sin que alguien autorice."
     }
 
     var subtitle: String {

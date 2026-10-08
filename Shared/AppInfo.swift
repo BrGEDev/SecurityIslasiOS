@@ -6,9 +6,9 @@
 import Foundation
 
 nonisolated enum AppInfo {
-    /// Nombre provisional del producto (brief, sección 9). Va también en las
-    /// frases de Siri: cámbialo solo aquí.
-    static let name = "Acceso"
+    /// Nombre del producto (por ahora el mismo que `CFBundleDisplayName`). Va
+    /// también en las frases de Siri: cámbialo solo aquí.
+    static let name = "Islas Security"
 
     /// Dominio de los enlaces de invitación (de ejemplo).
     static let inviteHost = "acceso.app"

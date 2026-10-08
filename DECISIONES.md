@@ -7,7 +7,7 @@ Supuestos y decisiones tomadas al construir la app de residentes. Cada punto mar
 
 | Capa | Carpeta | Qué contiene |
 |---|---|---|
-| App iPhone | `SecurityIslas/App` | Entrada (`IslasSecurityApp`), `AppContainer` (inyección de dependencias), `RootView` (raíz según sesión), `PhoneWatchBridge` (vínculo con el reloj) |
+| App iPhone | `SecurityIslas/app` | Entrada (`IslasSecurityApp`), `AppContainer` (inyección de dependencias), `RootView` (raíz según sesión), `PhoneWatchBridge` (vínculo con el reloj) |
 | App reloj | `SecurityIslasWatch Watch App` | `WatchContainer`, `WatchLinkReceiver`, pantallas del reloj y `QRCodeMatrix` |
 | Compartido | `Shared` | Lo que compilan los dos targets: `AppInfo`, `Formatting`, `Presentation` (chips y textos de visita), `ViewModels` (`GateViewModel`, `PanicViewModel`), `WatchLink` y `Core` |
 | Core · Red | `Shared/Core/Networking` | `Endpoint`, `APIClient` (actor), `HTTPTransport`, `RequestInterceptor`, `AuthInterceptor`, `APIError` |
@@ -19,6 +19,12 @@ Supuestos y decisiones tomadas al construir la app de residentes. Cada punto mar
 | Core · Servicios | `Shared/Core/Services` | Ubicación/geocercas, notificaciones, Mi QR (TOTP) |
 | Sistema de diseño | `SecurityIslas/DesignSystem` | Botones, campos, avatares, encabezados (solo iPhone) |
 | Features | `SecurityIslas/Features/*` | Registro, Inicio, Visitas, Pluma, Historial, Pánico, Cuenta |
+| Siri | `SecurityIslas/Intents` | App Intents y `AppShortcutsProvider` |
+| Live Activity (app) | `SecurityIslas/LiveActivity` | `VisitActivityController` |
+| Widgets | `IslasWidgets` (+ `Shared`) | Widgets, Live Activity (UI) y controles |
+| Notificaciones | `NotificationService` | Foto y tipo en el aviso |
+| Reloj | `IslasWatchWidgets` | Complicaciones y Smart Stack |
+| Pruebas | `SecurityIslasTests`, `SecurityIslasUITests` | Swift Testing y XCUITest |
 
 - **Carpeta `Shared`.** Es una carpeta sincronizada que pertenece a los dos targets (iPhone y
   reloj): todo archivo nuevo ahí se compila en ambos. Lo exclusivo de una plataforma va detrás de
@@ -60,8 +66,15 @@ Supuestos y decisiones tomadas al construir la app de residentes. Cada punto mar
 
 ## Firma de acciones sensibles (RF-67, RNF-05)
 
-- La llave P-256 se crea en el Secure Enclave con `SecAccessControl` `[.privateKeyUsage, .userPresence]`
-  (biometría **o** código del iPhone). La biometría nunca es un booleano local: es lo que permite firmar.
+- **Decidido (Brandon): `.biometryCurrentSet`.** La llave P-256 del Secure Enclave se crea con
+  `[.privateKeyUsage, .biometryCurrentSet]`: si se agregan o quitan caras/huellas, la llave deja de
+  servir. La app lo detecta antes de firmar (compara el estado del dominio biométrico guardado al
+  crearla), borra la llave y pide de nuevo Face ID con un aviso; se registra una llave nueva
+  (`POST devices/key`). La biometría nunca es un booleano local: es lo que permite firmar.
+- "Usar el código del iPhone" (pantalla 8) o un iPhone sin biometría registrada crea la llave con
+  `[.privateKeyUsage, .devicePasscode]` **(supuesto)**: respaldo de RF-67.
+- Con llave biométrica se evalúa `.deviceOwnerAuthenticationWithBiometrics` (sin botón de código),
+  porque un contexto autenticado con código no le sirve a una llave `.biometryCurrentSet`.
 - **(supuesto)** Mensaje firmado: `MÉTODO \n ruta \n timestamp \n nonce \n sha256(body)`, ECDSA
   P-256/SHA-256 en DER, enviado en `X-Signature`, `X-Signature-Timestamp`, `X-Signature-Nonce`.
   Vigencia 120 s y nonce de un solo uso.
@@ -73,9 +86,14 @@ Supuestos y decisiones tomadas al construir la app de residentes. Cada punto mar
   token recién emitido por el SMS. **(supuesto)** Backend debe aceptarlo solo en ese momento.
 - **Simulador:** no hay Secure Enclave; se usa una llave de software para poder desarrollar. En un
   iPhone real siempre es Secure Enclave.
-- **Pendiente:** App Attest (`DCAppAttestService`) en el registro de la llave (`attestation` va `nil`).
-- **Pendiente de decidir (sección 9):** `.userPresence` no invalida la llave si cambian las caras o
-  huellas. Si se decide `.biometryCurrentSet`, basta cambiar la bandera en `DeviceKeyManager`.
+- **App Attest (supuesto de contrato).** `POST devices/attest-challenge` → `{ challenge, expiresAt }`;
+  la app genera una llave de App Attest y la atesta con
+  `clientDataHash = SHA256(reto ‖ llave pública del dispositivo)`, así la atestación queda ligada a
+  la llave del Secure Enclave. `POST devices/key` lleva `attestation`, `attestationKeyId` y
+  `attestationChallenge`. Sin soporte (simulador) se registra sin atestación y el backend decide.
+  En watchOS no se usa hasta confirmar con Apple.
+- **Pruebas de UI en el simulador** (`-uiTesting YES`): se omite Face ID y se reinicia el backend de
+  prueba y la sesión. Solo existe en el simulador.
 
 ## Pluma y Mi QR
 
@@ -93,15 +111,100 @@ Supuestos y decisiones tomadas al construir la app de residentes. Cada punto mar
 - **(supuesto)** El backend decide el destino con la ubicación enviada (guardias dentro del perímetro,
   contactos fuera); la app lo anticipa con la misma geocerca.
 - **(supuesto)** Estado cada 3 s y ubicación cada 10 s mientras la alerta siga abierta.
-- **Pendiente:** `CLBackgroundActivitySession` y modo de fondo de ubicación para seguir enviando la
-  ubicación con la app cerrada (requiere activar Background Modes en el target).
+- La ubicación del pánico sale de `LocationService.trackCoordinates()`, que abre una
+  `CLBackgroundActivitySession` (modo de fondo `location` activado): sigue enviándose con la app en
+  segundo plano. El estado se consulta cada 3 s y la ubicación se manda cada 10 s **(supuesto)**.
+- Geocercas con `CLMonitor` (iOS): una por carril (radio de la entrada) y el perímetro. Se registran
+  al cargar Inicio; el pánico usa el último estado si no hay posición precisa. watchOS no tiene
+  `CLMonitor`: se calcula con la última posición.
 
 ## Notificaciones
 
 - Categorías registradas: `VISITA_PENDIENTE` (Rechazar funciona bloqueado; Autorizar con
   `.authenticationRequired`) y `VISITA_INFO` (sin botones). Las acciones llaman al mismo repositorio.
-- **Pendiente:** Notification Service Extension (foto), Live Activity y registro del token APNs/FCM
-  (sección 9: APNs directo o FCM).
+- **Decidido: APNs directo.** La app registra el token en cada arranque y lo sube con
+  `PUT devices/current/push-token` `{ kind: alert | liveActivityStart, token (hex), environment, topic }`
+  **(supuesto)** cuando hay sesión; solo lo vuelve a subir si cambia el token o la cuenta.
+- **Contenido del push (supuesto):**
+  - Visita: `aps.category = VISITA_PENDIENTE`, `mutable-content: 1`, `interruption-level:
+    time-sensitive`; raíz `type: visit.pending`, `visitId`, `kind`, `photoURL` (https firmada y de
+    corta vida, sin token) y `residence`.
+  - Informativo: `aps.category = VISITA_INFO`, `type: visit.info`.
+  - Otro integrante respondió (RF-06): silencioso (`content-available: 1`) con `type: visit.responded`,
+    `visitId`, `visitName`, `decision`, `respondedBy`. La app quita el aviso, cierra la Live Activity
+    y avisa quién respondió.
+- **Notification Service Extension:** descarga la foto y la adjunta; si no trae título/subtítulo,
+  pone "Visita/Servicio en caseta". Sin foto a tiempo, el aviso sale solo con texto.
+- Tocar el aviso abre Visitas › Hoy.
+
+## Live Activity (pantallas 11 y 12)
+
+- Una actividad por visita pendiente. La app la inicia al cargar Inicio (y la cierra si la visita ya
+  no está pendiente); con la app cerrada la inicia el backend con el token *push to start*
+  (iOS 17.2+, `kind: liveActivityStart`).
+- Cada actividad manda su token a `PUT visits/{id}/activity-token` `{ token, environment }`
+  **(supuesto)** para que el backend la actualice o la cierre en todos los teléfonos de la casa.
+- Cuenta regresiva hasta `respondBy` (si el backend no lo manda, llegada + 60 s). Al vencer queda
+  "obsoleta" y dice que se está escalando; al cerrarse sin respuesta dice "Sin respuesta · no entró".
+  Nunca se autoriza sola (RF-04).
+- Botones: Rechazar (`VisitDecisionIntent`, funciona bloqueado) y Autorizar
+  (`AuthorizeVisitFromLockScreenIntent`, `.requiresAuthentication`, RF-02). Son `LiveActivityIntent`:
+  corren en el proceso de la app y llaman al mismo repositorio.
+
+## Widgets y controles
+
+- Los widgets no hacen red ni leen la sesión: la app escribe `WidgetSnapshot` en el App Group
+  `group.app.security.islasgower` al cargar Inicio y recarga los widgets. Por eso **no** se activó
+  Keychain Sharing (`AppInfo.keychainAccessGroup` sigue en `nil`). Al cerrar sesión se borra.
+- Mediano: visita en caseta con Rechazar / Autorizar (mismos intents) y botón de abrir pluma o
+  solicitar paso. Chico: pánico. Pantalla bloqueada: distancia a la entrada y visitas pendientes.
+- Abrir pluma, pánico y Mi QR abren la app con `islassecurity://gate|panic|qr`: abrir usa el mismo
+  botón de Inicio (geocerca, carril y Face ID) y el pánico abre la pantalla de mantener presionado
+  (RF-41). Controles del Centro de control (iOS 18) con `OpenURLIntent` a los mismos enlaces.
+- Complicaciones del reloj: `islassecurity://gate|panic|qr` abren la página correspondiente.
+
+## Siri (RF-30 a RF-34)
+
+- `AutorizarVisitaIntent` (visitas pendientes como `VisitEntity`; si hay varias pregunta cuál),
+  `AbrirPlumaIntent` (mismas reglas de geocerca y carril; abre la app porque firma con Face ID),
+  `PanicoIntent` (abre la pantalla de mantener presionado) y `MiQRIntent`. Todos exigen el iPhone
+  desbloqueado (`.requiresAuthentication`). Frases con el nombre de la app.
+- Los intents usan `AppContainer.shared` (una instancia por proceso) y esperan el arranque de la
+  sesión (`SessionStore.activeProfile()`).
+
+## Caché sin red (SwiftData)
+
+- `OfflineCache` guarda la respuesta JSON del backend por clave (Inicio, visitas de hoy,
+  invitaciones, recurrentes, paquetes, historial). Solo se usa si falla la red; las acciones nunca
+  salen de la caché. Inicio muestra "Sin conexión · datos de …". Se borra al cerrar sesión.
+
+## Roles
+
+- **Decidido (Brandon): el menor** solo abre la pluma o solicita paso para su propio paso y usa su
+  QR. No ve Visitas, no autoriza, no invita ni cambia recurrentes, paquetería, familia o contactos.
+  El backend responde 403 `MINOR_NOT_ALLOWED` **(supuesto)**. Mantiene el pánico (seguridad).
+- El propietario no residente nunca usa el botón de abrir (RF-87), esté o no rentada la casa.
+
+## Visitas (RF-04, RF-06, RF-71, RF-86)
+
+- `respondBy` **(supuesto)**: hasta cuándo puede responder antes de escalar; la tarjeta explica que
+  se escala a WhatsApp y llamada y que, sin respuesta, no entra.
+- `destinationCount > 1`: servicio a varias viviendas; cada una responde por la suya.
+- `restrictedMatch` **(supuesto)**: `possible` (solo el nombre, "posible coincidencia") o
+  `confirmed` (placa o identificación: la administración decide; Autorizar se desactiva y el backend
+  responde 409 `RESTRICTED_MATCH`).
+
+## Casos de vivienda
+
+- **Huésped (RF-92):** `TemporaryGuest` trae `shareURL`, `pin` y `entries` **(supuesto)**; detalle con
+  su QR, reenviar acceso y entradas. El acceso vence solo.
+- **Obra (RF-88/89):** `WorkPermit.todayEntries` con `outsideSchedule` y `restrictedMatch`
+  **(supuesto)**. El resumen diario se puede apagar; el aviso inmediato fuera de horario o por lista
+  restringida siempre llega (lo manda el backend).
+- **Fin de contrato (RF-84):** `UserProfile.contractEndsOn` **(supuesto)**. A 7 días o menos
+  **(supuesto)**, Inicio pregunta "¿Sigues viviendo aquí?": `POST residence/tenancy`
+  `{ decision: stay | leave }`, firmado. "Me mudo" da de baja el acceso en todos los dispositivos y
+  cierra la sesión.
 
 ## Backend de prueba (MockServer)
 
@@ -112,17 +215,21 @@ Cuentas y llaves se guardan en `UserDefaults`; visitas, paquetes, etc. se reinic
 
 | Número | Caso |
 |---|---|
-| 222 123 4567 · 221 848 6093 | Brandon, cuenta existente (3a), 1 dispositivo |
+| 222 123 4567 · 221 848 6093 | Brandon, cuenta existente (3a), con un Apple Watch vinculado |
 | 222 999 9999 | Cuenta existente con 3 dispositivos (3b) + un Apple Watch, que no cuenta |
 | 222 555 0000 | Precargado por la administración (RF-63) → pantalla 5 → aprobado |
 | 551 234 5678 | Laura, propietaria no residente con casa rentada (pantalla 38) |
+| 222 777 0000 | Diego, menor: su QR y la pluma para su paso |
+| 222 888 0000 | Sofía, arrendataria con el contrato por terminar (RF-84) |
 | Cualquier otro | Residente nuevo → 4 → 5 → 6; se aprueba solo a los ~12 s |
 
 Código SMS: **123456**. Enlace de invitación: cualquier código de 4+ caracteres (ej. `7KX2`);
 `0000` es inválido.
 
 **Cuenta › Simulación** (solo con mock): posición simulada (carril de residentes, carril compartido,
-lejos), llegada de visita/servicio con notificación local, vida del access token y reinicio de datos.
+lejos), llegada de visita/servicio con notificación local, "otro integrante responde primero"
+(RF-06), vida del access token y reinicio de datos. Las cuentas de prueba nuevas se agregan solas
+aunque ya haya un estado guardado.
 
 Para usar el backend real: lanzar con el argumento `-useLiveAPI YES` y ajustar `APIConfig.staging`.
 
@@ -184,8 +291,9 @@ Para usar el backend real: lanzar con el argumento `-useLiveAPI YES` y ajustar `
   cuenta de prueba; las visitas simuladas en el iPhone también se mandan al reloj, y el reloj tiene
   su propio menú "Simulación". Las respuestas no se sincronizan entre los dos servidores de prueba
   (con el backend real sí).
-- **Pendiente:** complicaciones y Smart Stack (target Widget Extension de watchOS), escena de
-  notificación personalizada con la foto, Siri en el reloj y caída (fase 5, requiere permiso).
+- Complicaciones y Smart Stack: target `IslasWatchWidgetsExtension` (pluma, pánico, Mi QR).
+- **Pendiente:** escena de notificación personalizada con la foto, Siri en el reloj y caída (fase 5,
+  requiere permiso).
 
 ## Otras decisiones
 
@@ -195,15 +303,12 @@ Para usar el backend real: lanzar con el argumento `-useLiveAPI YES` y ajustar `
 - Lada México corregida a **+52** (estaba en 51).
 - Se agregaron al Info.plist generado: `NSFaceIDUsageDescription`, `NSLocationWhenInUseUsageDescription`
   y `NSLocationAlwaysAndWhenInUseUsageDescription` (sin ellas la app se cierra al pedir Face ID).
-- El `CFBundleDisplayName` sigue siendo "Islas Security" mientras en la UI se usa `AppInfo.name`
-  ("Acceso", provisional). Hay que alinearlos cuando se decida el nombre.
-- `AppInfo.keychainAccessGroup` está en `nil`. Al agregar widgets, extensión de notificaciones o
-  intents, activar Keychain Sharing y poner el grupo para compartir la sesión.
-- Un menor (rol `minor`) no autoriza visitas; el backend responde 403 (por decidir, sección F-33).
+- **Decidido:** nombre "Islas Security" por ahora (`AppInfo.name` = `CFBundleDisplayName`).
+- **Decidido:** mínimo iOS 17; lo de iOS 18 (controles) va detrás de `#available`.
 
-## Pendiente (fuera de este cambio)
+## Pendiente
 
-- Targets de widgets/controles/Live Activity, Notification Service Extension, App Intents (Siri) y
-  widgets de watchOS (secciones E y G).
-- Pruebas unitarias (Swift Testing) y de UI (XCUITest) para registro, autorizar visita y abrir pluma.
-- SwiftLint / SwiftFormat.
+- Escena de notificación del reloj con foto, Siri y push propios del reloj.
+- Universal Links (`associated-domains`) con el dominio real.
+- SwiftLint / SwiftFormat, revisión de accesibilidad y String Catalog.
+- Crashlytics o Sentry.

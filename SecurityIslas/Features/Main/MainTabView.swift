@@ -99,6 +99,35 @@ struct MainTabView: View {
                 // Un enlace de invitación con sesión activa no aplica: ya tiene vivienda.
                 if code != nil { container.pendingInviteCode = nil }
             }
+            .task(id: profile.id) {
+                container.push.sessionDidChange(userId: profile.id)
+            }
+            .onChange(of: container.panicRequest, initial: true) { _, entry in
+                // Siri, widget o control: abre la pantalla de mantener presionado
+                // (RF-41); nunca envía la alerta directo.
+                guard let entry else { return }
+                container.panicRequest = nil
+                router.panic = entry
+            }
+            .onChange(of: container.gateRequest, initial: true) { _, requested in
+                // Inicio atiende el pedido con el mismo botón (y Face ID).
+                if requested { router.selectedTab = .home }
+            }
+            .onChange(of: container.tabRequest, initial: true) { _, tab in
+                guard let tab else { return }
+                container.tabRequest = nil
+                router.selectedTab = tab
+            }
+            .onChange(of: container.visitToOpen, initial: true) { _, visitId in
+                // Se tocó el aviso de una visita: abre Visitas › Hoy.
+                guard visitId != nil else { return }
+                container.visitToOpen = nil
+                if profile.canAuthorizeVisits {
+                    router.open(.today)
+                } else {
+                    router.selectedTab = .home
+                }
+            }
     }
 
     /// iOS 18+: API de `Tab` con estilo adaptable. En la pantalla interior del
@@ -108,7 +137,9 @@ struct MainTabView: View {
         if #available(iOS 18, *) {
             TabView(selection: $router.selectedTab) {
                 Tab("Inicio", systemImage: "house", value: MainTab.home) { homeTab }
-                Tab("Visitas", systemImage: "person.2", value: MainTab.visits) { visitsTab }
+                if profile.canAuthorizeVisits {
+                    Tab("Visitas", systemImage: "person.2", value: MainTab.visits) { visitsTab }
+                }
                 Tab("Mi QR", systemImage: "qrcode", value: MainTab.qr) { qrTab }
                 Tab("Cuenta", systemImage: "person.crop.circle", value: MainTab.account) { accountTab }
             }
@@ -123,9 +154,11 @@ struct MainTabView: View {
                 homeTab
                     .tabItem { Label("Inicio", systemImage: "house") }
                     .tag(MainTab.home)
-                visitsTab
-                    .tabItem { Label("Visitas", systemImage: "person.2") }
-                    .tag(MainTab.visits)
+                if profile.canAuthorizeVisits {
+                    visitsTab
+                        .tabItem { Label("Visitas", systemImage: "person.2") }
+                        .tag(MainTab.visits)
+                }
                 qrTab
                     .tabItem { Label("Mi QR", systemImage: "qrcode") }
                     .tag(MainTab.qr)
